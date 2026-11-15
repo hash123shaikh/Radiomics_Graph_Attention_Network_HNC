@@ -1,0 +1,15 @@
+\begin{tabular}{@{}lccccccccc@{}}
+\toprule
+ & \multicolumn{3}{c}{Across CV folds} & \multicolumn{3}{c}{Bootstrap} & \multicolumn{3}{c}{Across centres} \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-7}\cmidrule(lr){8-10}
+Method & LR & DM & OS & LR & DM & OS & LR & DM & OS \\
+\midrule
+mRMR & 0.54 & 0.36 & 0.34 & 0.29 & 0.23 & 0.21 & 0.06 & 0.07 & -- \\
+LASSO & 0.11 & 0.34 & 0.29 & 0.16 & 0.13 & 0.19 & 0.03 & 0.11 & -- \\
+Boruta & 0.18 & 0.55 & 0.31 & 0.13 & 0.18 & 0.21 & 0.05 & 0.00 & -- \\
+RFE-RF & 0.27 & 0.29 & 0.27 & 0.13 & 0.17 & 0.22 & 0.05 & 0.04 & -- \\
+Graph-FS (CC) & 0.55 & 0.45 & \textbf{0.79} & 0.31 & 0.34 & 0.38 & 0.12 & 0.00 & -- \\
+Graph-FS (spectral) & \textbf{0.64} & \textbf{0.73} & 0.63 & \textbf{0.55} & \textbf{0.54} & \textbf{0.43} & \textbf{0.21} & \textbf{0.18} & -- \\
+Graph-FS (hybrid) & 0.59 & 0.70 & 0.43 & 0.38 & 0.34 & 0.29 & 0.11 & 0.11 & -- \\
+\botrule
+\end{tabular}

@@ -1,0 +1,47 @@
+\begin{tabular}{@{}llllcc@{}}
+\toprule
+Outcome / design & Inputs & Model & Configuration & Val. AUC & Test AUC [95\% CI] \\
+\midrule
+LR, 5-fold CV & Img & GAT, chosen on validation & Boruta + Radiomic kNN & 0.71 & 0.61 [0.50, 0.72]$^{p=1.00}$ \\
+ & Img & GAT, reference & Table S3 (RadGraph) + Radiomic star & 0.54 & 0.63 [0.51, 0.75] \\
+ & Img & RF, selected GTV features & All features & 0.69 & 0.56 [0.45, 0.68] \\
+ & Img+Clin & GAT, chosen on validation & All features + Radiomic kNN & 0.74 & 0.58 [0.46, 0.69]$^{p=1.00}$ \\
+ & Img+Clin & GAT, reference & Table S3 (RadGraph) + Radiomic star & 0.51 & 0.69 [0.59, 0.80] \\
+ & Img+Clin & RF, clinical only & -- & 0.71 & 0.66 [0.56, 0.76] \\
+\addlinespace
+LR, Cohort split & Img & GAT, chosen on validation & All features + Radiomic kNN & 0.75 & 0.63 [0.51, 0.75]$^{p=1.00}$ \\
+ & Img & GAT, reference & Table S3 (RadGraph) + Radiomic star & 0.28 & 0.52 [0.41, 0.64] \\
+ & Img & RF, selected GTV features & All features & 0.61 & 0.56 [0.44, 0.68] \\
+ & Img+Clin & GAT, chosen on validation & Graph-FS (spectral) + Radiomic kNN & 0.80 & 0.71 [0.62, 0.81]$^{p=0.72}$ \\
+ & Img+Clin & GAT, reference & Table S3 (RadGraph) + Radiomic star & 0.27 & 0.55 [0.43, 0.67] \\
+ & Img+Clin & RF, clinical only & -- & 0.67 & 0.63 [0.52, 0.75] \\
+\midrule
+DM, 5-fold CV & Img & GAT, chosen on validation & All features + Radiomic kNN & 0.64 & 0.66 [0.49, 0.82]$^{p=0.24}$ \\
+ & Img & GAT, reference & Table S3 (RadGraph) + Radiomic star & 0.60 & 0.41 [0.24, 0.58] \\
+ & Img & RF, selected GTV features & Graph-FS (hybrid) & 0.82 & 0.58 [0.34, 0.79] \\
+ & Img+Clin & GAT, chosen on validation & All features + Radiomic kNN & 0.56 & 0.65 [0.44, 0.85]$^{p=1.00}$ \\
+ & Img+Clin & GAT, reference & Table S3 (RadGraph) + Radiomic star & 0.38 & 0.60 [0.32, 0.85] \\
+ & Img+Clin & RF, clinical only & -- & 0.63 & 0.80 [0.70, 0.89] \\
+\addlinespace
+DM, Cohort split & Img & GAT, chosen on validation & RFE-RF + Spatial star & 0.81 & 0.36 [0.14, 0.60]$^{p=1.00}$ \\
+ & Img & GAT, reference & Table S3 (RadGraph) + Radiomic star & 0.68 & 0.40 [0.22, 0.56] \\
+ & Img & RF, selected GTV features & Graph-FS (CC) & 0.73 & 0.60 [0.43, 0.77] \\
+ & Img+Clin & GAT, chosen on validation & All features + Radiomic star & 0.75 & 0.19 [0.10, 0.31]$^{p<0.01}$ \\
+ & Img+Clin & GAT, reference & Table S3 (RadGraph) + Radiomic star & 0.49 & 0.68 [0.44, 0.87] \\
+ & Img+Clin & RF, clinical only & -- & 0.54 & 0.70 [0.57, 0.81] \\
+\midrule
+OS, 5-fold CV & Img & GAT, chosen on validation & Graph-FS (spectral) + Spatial kNN & 0.69 & 0.46 [0.35, 0.56]$^{p=0.20}$ \\
+ & Img & GAT, reference & mRMR + Radiomic star & 0.57 & 0.62 [0.52, 0.72] \\
+ & Img & RF, selected GTV features & Graph-FS (spectral) & 0.69 & 0.52 [0.41, 0.62] \\
+ & Img+Clin & GAT, chosen on validation & Graph-FS (spectral) + Spatial kNN & 0.69 & 0.47 [0.36, 0.57]$^{p=0.11}$ \\
+ & Img+Clin & GAT, reference & mRMR + Radiomic star & 0.59 & 0.66 [0.56, 0.75] \\
+ & Img+Clin & RF, clinical only & -- & 0.66 & 0.60 [0.51, 0.69] \\
+\addlinespace
+OS, Cohort split & Img & GAT, chosen on validation & Graph-FS (spectral) + Spatial kNN & 0.73 & 0.45 [0.35, 0.56]$^{p=1.00}$ \\
+ & Img & GAT, reference & mRMR + Radiomic star & 0.55 & 0.56 [0.46, 0.66] \\
+ & Img & RF, selected GTV features & Graph-FS (spectral) & 0.66 & 0.52 [0.42, 0.63] \\
+ & Img+Clin & GAT, chosen on validation & Graph-FS (spectral) + Spatial kNN & 0.73 & 0.48 [0.37, 0.57]$^{p=0.56}$ \\
+ & Img+Clin & GAT, reference & mRMR + Radiomic star & 0.55 & 0.62 [0.52, 0.73] \\
+ & Img+Clin & RF, clinical only & -- & 0.69 & 0.42 [0.32, 0.53] \\
+\botrule
+\end{tabular}

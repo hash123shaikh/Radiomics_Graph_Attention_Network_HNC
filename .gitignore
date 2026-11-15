@@ -1,0 +1,56 @@
+# ---------------------------------------------------------------------------
+# Patient data and patient-derived files: NEVER commit
+# ---------------------------------------------------------------------------
+radgraph-hnscc/data/
+radgraph-hnscc/outputs/
+radgraph-hnscc/outputs_archive_*/
+radgraph-hnscc/logs/
+*.nii
+*.nii.gz
+*.dcm
+*.nrrd
+*.mha
+*.npz
+*.npy
+*.xlsx
+*.xls
+
+# Trained model weights (attach to a GitHub Release when publishing)
+*.pt
+*.pth
+*.ckpt
+*.joblib
+*.pkl
+
+# ---------------------------------------------------------------------------
+# Third-party material (copyright of the original authors / publishers)
+# ---------------------------------------------------------------------------
+CodeRelease/
+Paper/Mateus_reproducibilty_paper.pdf
+Paper/Graph_Feature_Selection_Technique.pdf
+Paper/Supplementary Material - Graph_Feature_Selection_Technique.docx
+Paper/RadGraph.pdf
+Paper/appendix_&_supplementary.pdf
+Paper/Abstract_ASTRO --- GNN_predict_LR.pdf
+
+# Personal meeting notes
+18 oct 2022-leonard wee BY AMAL.txt
+
+# ---------------------------------------------------------------------------
+# Build artefacts
+# ---------------------------------------------------------------------------
+Paper/RadGraph-FS_manuscript.zip
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.synctex.gz
+*.fdb_latexmk
+*.fls
+~$*
+.~lock.*
+.DS_Store
