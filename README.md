@@ -670,7 +670,7 @@ python predict.py --task LR --ct new/CT.nii.gz --mask new/GTV.nii.gz --id NEW001
 
 For each patient the output gives the ensemble probability, the spread across ensemble members, high or low risk at the validation Youden threshold, and the label when it is known.
 
-> Trained weights are not tracked in git because of their size. They can be shared as a GitHub Release asset on request.
+> **Trained models** are not tracked in git. Download them from the [GitHub Releases](https://github.com/hash123shaikh/Radiomics_Graph_Attention_Network_HNC/releases) page (`radgraph-hnscc_final_models_v3.zip`) and unzip the file into `radgraph-hnscc/outputs/`. These models were trained with preprocessing v3. Before running `predict.py`, set `PREPROCESS_VERSION = 3`, `USE_BODY_MASK = False` and `SLIC_HU_WINDOW = None` in `radgraph/config.py`.
 
 | Result file (`radgraph-hnscc/outputs/results/`) | Content |
 |---|---|
@@ -690,7 +690,7 @@ For each patient the output gives the ensemble probability, the spread across en
 * **DM external set.** With 7 external DM events, DM results cannot be interpreted beyond their confidence intervals.
 * **Cohort shift.** The test cohort includes laryngeal cancers, more HPV-negative patients and less chemotherapy.
 * **One extraction setting.** Stability was measured across data resamples and centres, not across radiomic extraction settings as in the original Graph-FS study.
-* **Supervoxel stage.** The 50 mm box extends beyond the skin, so a median of 22% of supervoxels were mostly air. A body mask and a soft-tissue window, now in preprocessing v4, make the peritumoral nodes more anatomically meaningful.
+* **Supervoxel stage.** The reported results use preprocessing v3. In v3 the 50 mm box extends beyond the skin, so a median of 22% of supervoxels were mostly air. The code now defaults to preprocessing v4, which adds a body mask and a soft-tissue window to make the peritumoral nodes more anatomically meaningful. The study has not yet been re-run with v4.
 * **Hyper-parameters** were taken from RadGraph, not tuned, and OS reused the LR settings.
 * **Binary horizons** discard censored patients. A survival formulation could use the data more efficiently.
 * **Fixed k = 6** for every selector, chosen for comparability. `--k native` lets each selector use its own size.
