@@ -9,6 +9,7 @@
 [![PyG 2.3](https://img.shields.io/badge/PyG-2.3.1-3c2179.svg)](https://pytorch-geometric.readthedocs.io/)
 [![PyRadiomics 3.0](https://img.shields.io/badge/PyRadiomics-3.0.1-2e8b57.svg)](https://pyradiomics.readthedocs.io/)
 [![Reporting: TRIPOD + CLAIM](https://img.shields.io/badge/reporting-TRIPOD%20%2B%20CLAIM-informational.svg)](#reporting-and-reproducibility)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Status: manuscript in preparation](https://img.shields.io/badge/status-manuscript%20in%20preparation-orange.svg)](#citation)
 
 QIRAIL Lab · Department of Radiation Oncology · Christian Medical College (CMC) Vellore, India
@@ -36,6 +37,7 @@ QIRAIL Lab · Department of Radiation Oncology · Christian Medical College (CMC
 15. [Citation](#citation)
 16. [Acknowledgements and references](#acknowledgements-and-references)
 17. [Keywords and topics](#keywords-and-topics)
+18. [License](#license)
 
 ---
 
@@ -437,3 +439,7 @@ The original RadGraph authors' code is not redistributed here. Please obtain it 
 **Keywords:** head and neck cancer · HNSCC · radiomics · graph neural network · graph attention network · feature selection · Graph-FS · reproducibility · external validation · radiotherapy outcome prediction · locoregional recurrence · distant metastasis · overall survival · supervoxels · SLIC · PyRadiomics · TCIA
 
 **Suggested GitHub topics:** `radiomics` `graph-neural-networks` `graph-attention-network` `head-and-neck-cancer` `feature-selection` `medical-imaging` `pytorch-geometric` `pyradiomics` `outcome-prediction` `radiotherapy` `reproducibility` `deep-learning` `tcia`
+
+## License
+
+The code is released under the [MIT License](LICENSE). The licence covers the code and documentation in this repository only. The imaging and clinical data stay under their TCIA licences, and the cited third-party works stay under their own terms.
