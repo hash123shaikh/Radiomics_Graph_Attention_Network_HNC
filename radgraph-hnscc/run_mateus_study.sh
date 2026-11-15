@@ -6,7 +6,7 @@
 #   4. export: outputs/results/ (CSV + ROC figures + predictions), outputs/final_models/ (weights)
 # Finished folds/models are cached: re-running this script only computes what is missing.
 cd "$(dirname "$0")"
-PY=/home/radiomicsserver/anaconda3/envs/GNNvenv/bin/python
+PY="${PY:-python}"   # override: PY=/path/to/env/bin/python ./run_mateus_study.sh
 log() { echo "=== $* $(date)"; }
 
 log "preprocess/extract started"
