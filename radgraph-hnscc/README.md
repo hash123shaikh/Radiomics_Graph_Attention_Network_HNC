@@ -10,6 +10,20 @@ Builds on
 - Mateus et al., *Sci Rep* 13, 18176 (2023): training/validation on the 4 Canadian centres, external test on
   MAASTRO, 5-fold stratified CV and the Diamant et al. (2019) cohort split, outcome horizons.
 
+## Quick start (reproduction)
+
+| Step | Command | Details |
+|---|---|---|
+| Environment | `conda env create -f environment.yml` (or `docker build -t radgraph-fs .`) | [REPRODUCIBILITY.md](REPRODUCIBILITY.md) |
+| Installation test, no data | `make smoke` | synthetic data, ~2 min |
+| Data | `python tools/organize_data.py ...` then `make check` | [DATA.md](DATA.md) |
+| Published external AUCs | `make verify` | released models on MAASTRO, no training |
+| Full study | `make study` | preprocessing v3, as in the manuscript |
+| Manuscript assets | `make export && make paper` | every figure, table and number |
+
+Paths and the preprocessing profile are set with environment variables (`RADGRAPH_DATA_DIR`,
+`RADGRAPH_OUTPUT_DIR`, `RADGRAPH_PREPROCESS`), never by editing code.
+
 ## Research question
 
 > Which feature-selection strategy gives node features that are both **predictive** and **reproducible**
@@ -138,11 +152,17 @@ Everything is collected in `report.html` (one self-contained file).
 ## Code layout
 
 ```
-main.py                     CLI (all stages)
+main.py                     CLI (all stages; --preprocess v3|v4)
 run_mateus_study.sh         the full study (all tasks, both designs, both checkpoint rules) + export
 export_results.py           study-level CSVs, ROC figures, final model copies
 predict.py                  inference with saved models (cohort patients or new NIfTI files)
-check_setup.py              environment / data check
+verify_release.py           re-apply the released models and compare with the reported external AUCs
+check_setup.py              environment / data check (patient and event counts vs the paper)
+smoke_test.py               every stage on synthetic data (installation test)
+tools/organize_data.py      arrange the TCIA / HECKTOR downloads into the expected layout
+Makefile                    make smoke | check | verify | study | export | paper | docker
+environment.yml, requirements.txt, requirements-lock.txt, Dockerfile    environments
+DATA.md, REPRODUCIBILITY.md data instructions; reproduction levels and what has been verified
 radgraph/
   config.py                 cohorts, modes, FS + topology grid, GAT (Table S2), run layout
   stats.py                  DeLong test, Holm correction
@@ -156,6 +176,7 @@ radgraph/
   engine/      train.py, evaluate.py (+ attention), baselines.py (RF)
   experiments/ benchmark.py (grid, summary), cv.py (cross-fold summary), export.py (study results)
   inference.py              load checkpoints, build graphs, ensemble prediction
+  provenance.py             provenance.json (git commit, versions, settings) for every run
   viz/         style, feature_graph, selection_plots, result_plots, patient_graph, report, paper_figure
 ```
 

@@ -537,8 +537,13 @@ Across configurations, the correlation between validation AUC and external AUC r
 │   ├── run_mateus_study.sh            the full study: LR, DM, OS × both designs × both checkpoint rules
 │   ├── export_results.py              study-level CSVs, ROC figures, final model copies
 │   ├── predict.py                     inference with the saved models (cohort patients or new NIfTI)
-│   ├── check_setup.py                 environment and data check
-│   ├── install_deps.sh, requirements.txt
+│   ├── verify_release.py              reproduces the published external AUCs from the released models
+│   ├── check_setup.py                 environment + data check (patient/event counts vs the paper)
+│   ├── smoke_test.py                  every stage on synthetic data (installation test)
+│   ├── tools/organize_data.py         arranges the TCIA / HECKTOR downloads
+│   ├── Makefile                       make smoke | check | verify | study | export | paper | docker
+│   ├── environment.yml, requirements.txt, requirements-lock.txt, Dockerfile
+│   ├── DATA.md, REPRODUCIBILITY.md    data instructions; reproduction levels and verification log
 │   ├── README.md                      detailed pipeline documentation
 │   └── radgraph/
 │       ├── config.py                  cohorts, designs, FS × topology grid, GAT hyper-parameters
@@ -549,6 +554,7 @@ Across configurations, the correlation between validation AUC and external AUC r
 │       ├── engine/                    training, evaluation (+ attention), RF baselines
 │       ├── experiments/               benchmark grid, cross-fold summary, export
 │       ├── inference.py               checkpoint loading and ensemble prediction
+│       ├── provenance.py              provenance.json for every run
 │       ├── stats.py, utils.py         DeLong, Holm, bootstrap CI, seeding
 │       └── viz/                       all figures and the HTML report
 ├── Paper/
@@ -573,53 +579,72 @@ For a gentle, illustrated introduction, read the documents in [`paper_workflow_v
 
 ## 10. Installation
 
-Tested on Ubuntu (Linux 5.15) with Python 3.8, CUDA 11.7 and an NVIDIA GPU. The pipeline also runs on CPU, but more slowly.
+Tested on Ubuntu (Linux 5.15) with Python 3.8, CUDA 11.7 and an NVIDIA GPU. Everything also runs on CPU, but more slowly. Choose one of three environments:
 
 ```bash
 git clone https://github.com/hash123shaikh/Radiomics_Graph_Attention_Network_HNC.git
 cd Radiomics_Graph_Attention_Network_HNC/radgraph-hnscc
 
-conda create -n GNNvenv python=3.8 -y
-conda activate GNNvenv
-bash install_deps.sh          # or: pip install numpy==1.24.3 "setuptools>=65" && pip install -r requirements.txt
+# (a) conda, with the exact package versions of the published results
+conda env create -f environment.yml && conda activate GNNvenv
+
+# (b) pip, into any Python 3.8 environment
+pip install numpy==1.24.3 "setuptools>=65" && pip install -r requirements-lock.txt
+
+# (c) Docker, with no local Python needed
+docker build -t radgraph-fs .
 ```
 
-The main pinned versions are `torch 2.0.1`, `torch-geometric 2.3.1`, `pyradiomics 3.0.1`, `SimpleITK 2.2.1`, `scikit-learn 1.3.0` and `mrmr-selection 0.2.6`. `torch-scatter`, `torch-sparse` and `torch-cluster` are **not** required. If you install them anyway, they must match the CUDA build of torch.
+Then test the installation **without any patient data**:
+
+```bash
+make smoke            # = python smoke_test.py: every pipeline stage on synthetic data, ~2 min on CPU
+```
+
+The main pinned versions are `torch 2.0.1`, `torch-geometric 2.3.1`, `pyradiomics 3.0.1`, `SimpleITK 2.2.1`, `scikit-learn 1.3.0` and `mrmr-selection 0.2.6`. `requirements-lock.txt` pins every package at the exact version of the environment that produced the results. `torch-scatter`, `torch-sparse` and `torch-cluster` are **not** required.
 
 ---
 
 ## 11. Data
 
-Both cohorts are public on [The Cancer Imaging Archive (TCIA)](https://www.cancerimagingarchive.net/). **No patient data are included in this repository.** Download the data yourself and arrange it as shown below.
+Both cohorts are public. **No patient data are included in this repository.** Step-by-step instructions are in **[radgraph-hnscc/DATA.md](radgraph-hnscc/DATA.md)**.
 
 | Cohort | Role | Source |
 |---|---|---|
-| Head-Neck-PET-CT (CHUM, CHUS, HGJ, HMR) | training / validation | [TCIA Head-Neck-PET-CT](https://doi.org/10.7937/K9/TCIA.2017.8oje5q00). CT + primary-GTV NIfTI as distributed by the [HECKTOR challenge](https://hecktor.grand-challenge.org/); outcomes from `INFOclinical_HN_Version2_30may2018.xlsx` |
+| Head-Neck-PET-CT (CHUM, CHUS, HGJ, HMR) | training / validation | CT + primary-GTV NIfTI from the [HECKTOR challenge](https://hecktor.grand-challenge.org/); outcomes (`INFOclinical_HN_Version2_30may2018.xlsx`) from [TCIA Head-Neck-PET-CT](https://doi.org/10.7937/K9/TCIA.2017.8oje5q00) |
 | MAASTRO HN1 | external test only | [TCIA HN1](https://doi.org/10.7937/tcia.2019.8kap372n): DICOM CT + RTSTRUCT and the clinical table |
 
-```
-radgraph-hnscc/data/
-├── HECKTOR 2026 Training Data/
-│   ├── INFOclinical_HN_Version2_30may2018.xlsx        sheets CHUM, CHUS, HGJ, HMR
-│   └── Images/<ID>/<ID>__CT.nii.gz, <ID>.nii.gz       mask: 1 = primary GTV, 2 = nodal GTV
-└── MAASTRO/
-    ├── clinical_data.csv                              HN1 clinical table (patient_id, outcomes, …)
-    └── Images/<HN1xxxx>/CT/*.dcm, RTSTRUCT/*.dcm
+```bash
+# arrange the downloads (symlinks; the downloaded folders are not modified)
+python tools/organize_data.py hecktor --src <HECKTOR download> --clinical <INFOclinical .xlsx> --out data/HNPET
+python tools/organize_data.py hn1     --src <NBIA download>    --clinical <HN1 clinical .csv>  --out data/MAASTRO
+
+# check the data: compares your patient and event counts with Table 1 of the paper
+make check
 ```
 
-The paths and column mappings are set in [`radgraph-hnscc/radgraph/config.py`](radgraph-hnscc/radgraph/config.py). Run `python check_setup.py` to check the environment, the files, and the number of patients and events for each endpoint.
+The data can live anywhere: set `RADGRAPH_DATA_DIR` (and `RADGRAPH_OUTPUT_DIR` for results). **No code needs to be edited.**
 
 ---
 
 ## 12. Reproducing the study
 
-```bash
-cd radgraph-hnscc
-python check_setup.py                       # 1. environment + data
-./run_mateus_study.sh                       # 2. full study (set PY=/path/to/python if not using the active env)
-python export_results.py                    # 3. collect results → outputs/results/ (no retraining)
-python ../Paper/manuscript/scripts/make_paper_assets.py   # 4. regenerate every figure, table and number of the paper
-```
+There are four levels of reproduction, from minutes to days. Details and the verification log are in **[radgraph-hnscc/REPRODUCIBILITY.md](radgraph-hnscc/REPRODUCIBILITY.md)**.
+
+| Level | What it reproduces | Needs | Command (in `radgraph-hnscc/`) |
+|---|---|---|---|
+| 0 | the installation works | nothing | `make smoke` |
+| 1 | **the published external AUCs**, from the released models | MAASTRO data only | `make verify` |
+| 2 | the full study, retrained from the raw images | both cohorts, GPU (several GPU-days) | `make study` |
+| 3 | every figure, table and number of the manuscript | results of level 2 | `make export && make paper` |
+
+**Verified on 15 Nov 2026:**
+* All **24/24** released model ensembles reproduce their reported external AUC to 4 decimals.
+* The same 24/24 result holds inside the Docker image on CPU.
+* The preprocessing re-run from the raw images is identical to the archived study cache.
+* All **218 numbers** and every table of the manuscript regenerate byte-identically from the study results.
+
+**Preprocessing profile.** The manuscript and the released models use **preprocessing v3**, which `make study` uses by default. The code also has an improved **v4** profile (body mask + soft-tissue window). Select the profile with `--preprocess v3|v4` or `RADGRAPH_PREPROCESS`. Caches record their profile, so files of different profiles are never mixed.
 
 The pipeline runs as a series of stages. Each stage stores its output, so an interrupted run resumes where it stopped:
 
@@ -635,14 +660,14 @@ The pipeline runs as a series of stages. Each stage stores its output, so an int
 Use `--force` to recompute a stage. Examples:
 
 ```bash
-python main.py --mode MATEUS_CV     --task DM --from_stage select                         # 5 folds + cross-fold summary
-python main.py --mode MATEUS_CV     --task OS --from_stage select --fold 3                # a single fold
-python main.py --mode MATEUS_COHORT --task LR --from_stage select --epoch_rule auc_gap    # Mateus checkpoint rule
+python main.py --mode MATEUS_CV     --task DM --from_stage select --preprocess v3            # 5 folds + cross-fold summary
+python main.py --mode MATEUS_CV     --task OS --from_stage select --fold 3                   # a single fold
+python main.py --mode MATEUS_COHORT --task LR --from_stage select --epoch_rule auc_gap       # Mateus checkpoint rule
 python main.py --mode MATEUS_CV     --task LR --stage benchmark \
-               --methods graph_fs_spectral mrmr --topologies radiomic_star --seeds 42     # a subset of the grid
+               --methods graph_fs_spectral mrmr --topologies radiomic_star --seeds 42        # a subset of the grid
 ```
 
-The full study is compute-intensive (3 endpoints × 2 designs × 2 checkpoint rules × ~144 configurations × 3 seeds, with 5 folds in CV). Finished models are cached, so re-running the script only computes what is missing.
+Every run writes a `provenance.json` with the git commit, command, package versions, device, preprocessing profile and settings, so each result can be traced to the code that produced it.
 
 ---
 
@@ -650,7 +675,8 @@ The full study is compute-intensive (3 endpoints × 2 designs × 2 checkpoint ru
 
 * **Reporting guidelines:** TRIPOD (type 3, external validation) and CLAIM.
 * **No data leakage:** feature selection, scaling, clinical encoding and model fitting use **training patients only**. Model choice uses validation only. MAASTRO is evaluated **once**.
-* **Determinism:** fixed seeds (3 per configuration, probabilities averaged), cached stages and pinned dependency versions.
+* **Determinism:** fixed seeds (3 per configuration, probabilities averaged), saved data splits, cached stages, an exact package lock and a Docker image. GPU scatter operations are not bit-deterministic, so a retrained model can differ slightly; the released models remove this variation.
+* **Provenance:** every run records the git commit, package versions, device and settings in `provenance.json`.
 * **Traceable numbers:** every number, table and figure in the manuscript is generated by `make_paper_assets.py` from the result CSVs. Nothing is typed by hand.
 * **Checkpoint fidelity:** re-applying the stored models reproduces the reported external predictions to within 10⁻⁷.
 * **Honest comparison:** a pre-specified reference, results reported for the whole grid, and Holm-corrected tests.
@@ -662,15 +688,16 @@ The full study is compute-intensive (3 endpoints × 2 designs × 2 checkpoint ru
 Every saved checkpoint is **self-contained**. It stores the weights, hyper-parameters, selected features, training scaler, clinical encoder, decision threshold and topology, so no retraining is needed:
 
 ```bash
-python predict.py --task LR --dataset MAASTRO                                       # chosen CV ensemble, whole cohort
-python predict.py --task OS --design MATEUS_COHORT --inputs imaging+clinical --dataset MAASTRO
+python predict.py --task LR --models <unzipped release>/final_models/MATEUS_CV_LR/imaging \
+                  --dataset MAASTRO --preprocess v3                                  # released models, whole cohort
+python predict.py --task OS --design MATEUS_COHORT --inputs imaging+clinical --dataset MAASTRO   # models of your own run
 python predict.py --task DM --config mrmr__spatial_star --dataset MAASTRO --patients HN1004 HN1006
 python predict.py --task LR --ct new/CT.nii.gz --mask new/GTV.nii.gz --id NEW001    # a new patient
 ```
 
 For each patient the output gives the ensemble probability, the spread across ensemble members, high or low risk at the validation Youden threshold, and the label when it is known.
 
-> **Trained models** are not tracked in git. Download them from the [GitHub Releases](https://github.com/hash123shaikh/Radiomics_Graph_Attention_Network_HNC/releases) page (`radgraph-hnscc_final_models_v3.zip`) and unzip the file into `radgraph-hnscc/outputs/`. These models were trained with preprocessing v3. Before running `predict.py`, set `PREPROCESS_VERSION = 3`, `USE_BODY_MASK = False` and `SLIC_HU_WINDOW = None` in `radgraph/config.py`.
+> **Trained models** are not tracked in git. They are attached to the [GitHub release `v0.1.0-models`](https://github.com/hash123shaikh/Radiomics_Graph_Attention_Network_HNC/releases/tag/v0.1.0-models). `make verify` downloads them and checks them against the reported AUCs. To use them yourself, unzip `radgraph-hnscc_final_models_v3.zip` and pass a model folder with `--models .../final_models/<DESIGN>_<TASK>/<inputs>` and `--preprocess v3`. The models were trained with preprocessing v3.
 
 | Result file (`radgraph-hnscc/outputs/results/`) | Content |
 |---|---|

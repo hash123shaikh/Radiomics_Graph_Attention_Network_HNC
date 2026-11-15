@@ -203,6 +203,15 @@ def _rel(p):
         return p
 
 
+def _run_preprocess(task, design, rule):
+    """Preprocessing profile recorded in the run's provenance.json (falls back to the current one)."""
+    f = _run(task, design, rule) / 'provenance.json'
+    try:
+        return json.loads(f.read_text())['settings']['preprocess']
+    except Exception:
+        return config.PREPROCESS
+
+
 def _copy_models(task, design, rule, row, fold_ens):
     from radgraph.inference import find_checkpoints
     ck = find_checkpoints(task, design, row.method, row.topology, bool(row.use_clinical), rule)
@@ -220,7 +229,9 @@ def _copy_models(task, design, rule, row, fold_ens):
             'fs_method': row.method, 'topology': row.topology, 'n_checkpoints': len(ck),
             'validation_auc': row.val_auc, 'external_test_auc': row.test_auc,
             'external_test_auc_95ci': [row.test_auc_ci_low, row.test_auc_ci_high],
-            'how_to_use': f"python predict.py --task {task} --models {_rel(dest)} --dataset MAASTRO"}
+            'preprocess': _run_preprocess(task, design, rule),
+            'how_to_use': (f"python predict.py --task {task} --models {_rel(dest)} --dataset MAASTRO "
+                           f"--preprocess {_run_preprocess(task, design, rule)}")}
     (dest / 'model_card.json').write_text(json.dumps(card, indent=1, default=float))
     return dest
 

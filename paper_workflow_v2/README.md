@@ -14,6 +14,6 @@ Regenerate (figures need the project environment; documents use system Python wi
 
 ```bash
 cd scripts
-/home/radiomicsserver/anaconda3/envs/GNNvenv/bin/python make_figures.py
-/usr/bin/python3 doc1_methods.py; /usr/bin/python3 doc2_gat.py; /usr/bin/python3 doc3_audit.py; /usr/bin/python3 doc4_slic.py
+python make_figures.py              # in the project environment (conda activate GNNvenv)
+python3 doc1_methods.py; python3 doc2_gat.py; python3 doc3_audit.py; python3 doc4_slic.py   # needs python-docx
 ```

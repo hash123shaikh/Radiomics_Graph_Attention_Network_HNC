@@ -1,0 +1,15 @@
+# Conda environment for RadGraph-FS (the environment of the published results: Python 3.8, CUDA 11.7).
+#   conda env create -f environment.yml && conda activate GNNvenv
+# numpy must be installed before pyradiomics, hence the two pip steps in install_deps.sh; with this
+# file conda installs numpy first, then pip installs the exact versions from requirements-lock.txt.
+name: GNNvenv
+channels:
+  - conda-forge
+dependencies:
+  - python=3.8
+  - pip
+  - numpy=1.24.3
+  - setuptools>=65
+  - git
+  - pip:
+      - -r requirements-lock.txt

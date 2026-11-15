@@ -33,10 +33,20 @@ def check_packages():
     return not missing
 
 
+# Patients with CT + primary GTV, and patients (events) per endpoint, in the manuscript (Table 1).
+# A different count means the local data differ from those of the study (see DATA.md).
+EXPECTED = {
+    'HNPET':   {'patients': 199, 'LR': (190, 13), 'DM': (191, 12), 'OS': (92, 19)},
+    'MAASTRO': {'patients': 137, 'LR': (121, 30), 'DM': (109, 7), 'OS': (135, 45)},
+}
+
+
 def check_data():
     header("Data")
+    import contextlib, io
     from radgraph import config
-    from radgraph.data.clinical import compute_labels
+    from radgraph.data.clinical import included_labels
+    from radgraph.data.loader import HNSCCDataLoader
     ok = True
     for name, cfg in config.DATASETS.items():
         img, clin = cfg['images_dir'], cfg['clinical_file']
@@ -46,8 +56,21 @@ def check_data():
         if not (img.is_dir() and clin.exists()):
             ok = False
             continue
+        exp = EXPECTED.get(name, {})
+        dl = HNSCCDataLoader(name)
+        with contextlib.redirect_stdout(io.StringIO()):
+            n_img = len(dl.eligible_patients_any_task())
+        print(f"  {'':8s} {'found':>14s} {'paper':>14s}")
+        line = lambda k, f, e: print(f"  {k:8s} {f:>14s} {e:>14s}  {'OK' if f == e else 'DIFFERENT'}")
+        line('patients', str(n_img), str(exp.get('patients', '?')))
         for task in cfg['outcomes']:
-            compute_labels(name, task)
+            with contextlib.redirect_stdout(io.StringIO()):
+                ids = dl.eligible_patients(task)
+                lab = included_labels(name, task, verbose=False)
+            found = f"{len(ids)} ({sum(lab[p] for p in ids)} ev)"
+            e = exp.get(task)
+            line(task, found, f"{e[0]} ({e[1]} ev)" if e else '?')
+    print("\nDIFFERENT counts do not stop the pipeline, but results will then differ from the paper.")
     return ok
 
 
@@ -65,7 +88,9 @@ def main():
     for n, r in results:
         print(f"  {'PASS' if r else 'FAIL'}  {n}")
     if all(r for _, r in results):
-        print("\nNext:  python main.py --mode MATEUS_CV --task LR --all --n_jobs 12")
+        print("\nNext:  python smoke_test.py                      (pipeline test on synthetic data)"
+              "\n       python verify_release.py --download       (reproduce the published external AUCs)"
+              "\n       ./run_mateus_study.sh                     (full study)")
 
 
 if __name__ == '__main__':

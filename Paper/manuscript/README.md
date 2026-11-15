@@ -24,7 +24,7 @@ latexmk -pdf supplementary.tex
 ## Updating after a re-run (e.g. the full Head-Neck-PET-CT image set)
 ```bash
 cd ../../radgraph-hnscc && ./run_mateus_study.sh          # re-train + export_results.py
-/home/radiomicsserver/anaconda3/envs/GNNvenv/bin/python ../Paper/manuscript/scripts/make_paper_assets.py
+python ../Paper/manuscript/scripts/make_paper_assets.py   # set RADGRAPH_OUTPUT_DIR if the results live elsewhere
 ```
 The tables, figures and every number in the text update automatically. Re-read the Results/Discussion
 wording afterwards, because the direction of some findings may change, and delete the orange draft notes

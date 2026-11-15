@@ -16,16 +16,30 @@ The HNPET images live in the folder "HECKTOR 2026 Training Data"; the clinical f
 Head-Neck-PET-CT INFOclinical xlsx (true LR, DM and death outcomes).
 """
 
+import os
 from pathlib import Path
 import torch
 
 # ============================================================================
 # PATHS
+#   Defaults are relative to this repository, so the code runs from any location. Override them with
+#   environment variables (no code edits needed), e.g.
+#     export RADGRAPH_DATA_DIR=/data/hnscc          # holds the HNPET and MAASTRO folders
+#     export RADGRAPH_OUTPUT_DIR=/scratch/radgraph  # caches, runs, results, final models
+#   RADGRAPH_HNPET_DIR / RADGRAPH_MAASTRO_DIR point to the two cohort folders individually.
 # ============================================================================
+def _env_path(var, default):
+    v = os.environ.get(var)
+    return Path(v).expanduser().resolve() if v else default
+
+
 BASE_DIR   = Path(__file__).resolve().parent.parent          # radgraph-hnscc/
-DATA_DIR   = BASE_DIR / "data"
-OUTPUT_DIR = BASE_DIR / "outputs"
-LOGS_DIR   = BASE_DIR / "logs"
+DATA_DIR   = _env_path('RADGRAPH_DATA_DIR', BASE_DIR / "data")
+OUTPUT_DIR = _env_path('RADGRAPH_OUTPUT_DIR', BASE_DIR / "outputs")
+LOGS_DIR   = _env_path('RADGRAPH_LOGS_DIR', BASE_DIR / "logs")
+HNPET_DIR   = _env_path('RADGRAPH_HNPET_DIR', DATA_DIR / "HNPET" if (DATA_DIR / "HNPET").is_dir()
+                        else DATA_DIR / "HECKTOR 2026 Training Data")     # either folder name works
+MAASTRO_DIR = _env_path('RADGRAPH_MAASTRO_DIR', DATA_DIR / "MAASTRO")
 
 CACHE_DIR         = OUTPUT_DIR / "cache"
 PREPROCESSED_DIR  = CACHE_DIR / "preprocessed"     # per-patient CT/GTV/supervoxels (cohort independent)
@@ -45,8 +59,8 @@ for _d in (OUTPUT_DIR, LOGS_DIR, PREPROCESSED_DIR, FEATURE_CACHE_DIR, RUNS_DIR):
 # ============================================================================
 DATASETS = {
     'MAASTRO': {
-        'images_dir'     : DATA_DIR / "MAASTRO" / "Images",
-        'clinical_file'  : DATA_DIR / "MAASTRO" / "clinical_data.csv",
+        'images_dir'     : MAASTRO_DIR / "Images",
+        'clinical_file'  : MAASTRO_DIR / "clinical_data.csv",
         'patient_id_col' : 'patient_id',
         'schema'         : 'MAASTRO',
         'outcomes'       : {
@@ -58,8 +72,8 @@ DATASETS = {
         'centre'         : 'MAASTRO',
     },
     'HNPET': {
-        'images_dir'     : DATA_DIR / "HECKTOR 2026 Training Data" / "Images",
-        'clinical_file'  : DATA_DIR / "HECKTOR 2026 Training Data" / "INFOclinical_HN_Version2_30may2018.xlsx",
+        'images_dir'     : HNPET_DIR / "Images",
+        'clinical_file'  : HNPET_DIR / "INFOclinical_HN_Version2_30may2018.xlsx",
         'clinical_sheets': ['CHUM', 'CHUS', 'HGJ', 'HMR'],      # 'Excluded' sheet is ignored
         'patient_id_col' : 'patient_id',
         'schema'         : 'HNPET',
@@ -191,7 +205,6 @@ GTV_EXCLUDE_TOKENS = ['gtvn', 'gtv-n', 'gtv_n', 'node', 'nodal', 'ln', 'gtv-2', 
 NIFTI_GTVP_LABEL = 1     # primary tumour in the NIfTI segmentation
 NIFTI_GTVN_LABEL = 2     # nodal GTV (not used as input)
 
-PREPROCESS_VERSION = 4   # v4: body mask + soft-tissue window before SLIC (v3: whole box, min-max over box)
 
 # ============================================================================
 # SUPERVOXELS + RADIOMICS
@@ -201,9 +214,31 @@ MIN_SUPERVOXEL_VOXELS = 8
 # Stage 2 refinements (v4). The 50 mm box extends beyond the skin: without a body mask ~22% of the
 # supervoxels were mostly air, and min-max scaling over air (-1024 HU) and metal (~3000 HU) squeezed
 # soft tissue into ~2.5% of the SLIC intensity range.
-USE_BODY_MASK      = True          # restrict supervoxels to the patient body
 BODY_HU_THRESHOLD  = -500          # body = CT > threshold, largest 3-D component, holes filled per slice
-SLIC_HU_WINDOW     = (-160, 240)   # soft-tissue window (W400/L40) applied before SLIC; None = min-max (v3)
+
+# Preprocessing profiles. 'v3' is the setting of the results reported in the manuscript and of the
+# released models (v0.1.0-models); 'v4' adds a body mask and a soft-tissue window before SLIC.
+#   select with  --preprocess v3|v4  (main.py, predict.py)  or  export RADGRAPH_PREPROCESS=v3
+PREPROCESS_PROFILES = {
+    'v3': {'PREPROCESS_VERSION': 3, 'USE_BODY_MASK': False, 'SLIC_HU_WINDOW': None},
+    'v4': {'PREPROCESS_VERSION': 4, 'USE_BODY_MASK': True,  'SLIC_HU_WINDOW': (-160, 240)},  # W400/L40
+}
+DEFAULT_PREPROCESS = 'v4'
+PREPROCESS = None
+PREPROCESS_VERSION = USE_BODY_MASK = SLIC_HU_WINDOW = None
+
+
+def set_preprocess(profile):
+    """Switch the preprocessing profile (sets PREPROCESS_VERSION, USE_BODY_MASK, SLIC_HU_WINDOW).
+    Cached files carry their version, so files of the other profile are recomputed, never mixed."""
+    global PREPROCESS
+    if profile not in PREPROCESS_PROFILES:
+        raise ValueError(f"Unknown preprocessing profile '{profile}'. Use one of {list(PREPROCESS_PROFILES)}")
+    PREPROCESS = profile
+    globals().update(PREPROCESS_PROFILES[profile])
+
+
+set_preprocess(os.environ.get('RADGRAPH_PREPROCESS', DEFAULT_PREPROCESS))
 
 PYRADIOMICS_SETTINGS = {
     'binWidth'             : 25,
@@ -408,7 +443,7 @@ def figures_dir(task, *parts):
 def print_config(task='LR'):
     print("=" * 70)
     print(f"RadGraph-FS | mode={MODE} (train={TRAIN_DATASETS}, test={TEST_DATASETS or 'internal split'})"
-          f" | task={task} | device={DEVICE}")
+          f" | task={task} | device={DEVICE} | preprocess={PREPROCESS}")
     print(f"Train/val scheme: {split_scheme()}"
           f"{f' ({N_FOLDS} folds)' if split_scheme() == 'cv' else ''}"
           f"{f' {COHORT_SPLIT}' if split_scheme() == 'cohort' else ''} | checkpoint rule: {EPOCH_RULE}")

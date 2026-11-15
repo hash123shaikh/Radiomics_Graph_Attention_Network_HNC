@@ -3,7 +3,7 @@ Figures for the paper_workflow_v2 documents.
 Reuses the manuscript figure code (Paper/manuscript/scripts/make_paper_assets.py) and adds
 document-specific figures. Run with the GNNvenv interpreter:
 
-    /home/radiomicsserver/anaconda3/envs/GNNvenv/bin/python make_figures.py
+    python make_figures.py        (project environment, e.g. conda activate GNNvenv)
 """
 
 import shutil

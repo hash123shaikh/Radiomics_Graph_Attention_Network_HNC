@@ -90,6 +90,11 @@ def _train_val(ids, labels, cohort, seed):
 def get_or_create_split(task, verbose=True):
     """Load the saved split of this run, or create it. Recreated if the patient set changes."""
     train_labels, test_labels, cohort = mode_labels(task, verbose)
+    if not train_labels:
+        raise RuntimeError(
+            f"No training patients with valid cached features for preprocessing profile "
+            f"'{config.PREPROCESS}' in {config.FEATURE_CACHE_DIR}. Run the preprocess/extract stages, or select "
+            f"the profile the cache was made with (--preprocess v3|v4 or RADGRAPH_PREPROCESS).")
     keyed = {**train_labels, **{f'test:{p}': v for p, v in test_labels.items()}}
     if config.split_scheme() != 'random':          # default-scheme keys stay unchanged
         keyed['_scheme'] = f'{config.split_scheme()}:{config.FOLD}:{config.N_FOLDS}:{config.COHORT_SPLIT}'

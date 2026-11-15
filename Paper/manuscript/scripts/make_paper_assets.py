@@ -2,9 +2,10 @@
 Build every figure and LaTeX table of the manuscript from the study results, so the paper can be
 regenerated after a re-run (e.g. once the full Head-Neck-PET-CT image set is available).
 
-    /home/radiomicsserver/anaconda3/envs/GNNvenv/bin/python make_paper_assets.py
+    python make_paper_assets.py          (project environment, e.g. conda activate GNNvenv)
 
-Reads   radgraph-hnscc/outputs/results/*.csv (written by export_results.py) and the clinical files
+Reads   $RADGRAPH_OUTPUT_DIR/results/*.csv (default radgraph-hnscc/outputs/; written by export_results.py)
+        and the clinical files
 Writes  ../figures/*.pdf|png  and  ../tables/*.tex  (\\input by main.tex and supplementary.tex)
         ../tables/numbers.tex (\\newcommand macros for every number quoted in the text)
 """
@@ -23,8 +24,10 @@ from matplotlib.patches import FancyBboxPatch
 HERE = Path(__file__).resolve().parent
 MS = HERE.parent
 PROJ = MS.parent.parent / 'radgraph-hnscc'
-RES = PROJ / 'outputs' / 'results'
-RUNS = PROJ / 'outputs' / 'runs'
+import os
+OUT = Path(os.environ['RADGRAPH_OUTPUT_DIR']).expanduser() if os.environ.get('RADGRAPH_OUTPUT_DIR') else PROJ / 'outputs'
+RES = OUT / 'results'
+RUNS = OUT / 'runs'
 FIG = MS / 'figures'
 TAB = MS / 'tables'
 FIG.mkdir(exist_ok=True)

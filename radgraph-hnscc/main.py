@@ -91,8 +91,12 @@ def main():
                     help=f'cross-validation modes: run this fold only (1..{config.N_FOLDS}; default all folds)')
     ap.add_argument('--epoch_rule', default=config.EPOCH_RULE, choices=['val_loss', 'auc_gap'],
                     help="checkpoint rule: lowest val loss (paper) or Mateus et al.'s train-val AUC gap rule")
+    ap.add_argument('--preprocess', default=config.PREPROCESS, choices=list(config.PREPROCESS_PROFILES),
+                    help="preprocessing profile: v3 = manuscript results and released models, v4 = body mask + "
+                         "soft-tissue window (default: $RADGRAPH_PREPROCESS or %(default)s)")
     a = ap.parse_args()
 
+    config.set_preprocess(a.preprocess)
     config.set_mode(a.mode)
     config.EPOCH_RULE = a.epoch_rule
     config.set_task(a.task)
@@ -103,6 +107,8 @@ def main():
         raise SystemExit(f"Task {a.task} is not available for every cohort of mode {config.MODE}")
     stages = STAGES if a.all else STAGES[STAGES.index(a.from_stage):] if a.from_stage else [a.stage]
     config.print_config(a.task)
+    from radgraph.provenance import write_provenance
+    write_provenance(config.mode_dir(a.task))
     t0 = time.time()
     folds = ([a.fold] if a.fold else list(range(1, config.N_FOLDS + 1))) if cv else [None]
 

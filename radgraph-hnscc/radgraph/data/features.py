@@ -27,7 +27,10 @@ from radgraph import config
 logging.getLogger('radiomics').setLevel(logging.ERROR)
 
 try:
+    import radiomics
     from radiomics import featureextractor
+    radiomics.setVerbosity(logging.ERROR)          # silence per-ROI info messages (e.g. GLCM symmetry note)
+    logging.getLogger('radiomics').setLevel(logging.ERROR)
     HAS_PYRADIOMICS = True
 except ImportError:
     HAS_PYRADIOMICS = False

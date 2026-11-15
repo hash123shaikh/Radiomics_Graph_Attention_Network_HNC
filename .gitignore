@@ -3,6 +3,7 @@
 # ---------------------------------------------------------------------------
 radgraph-hnscc/data/
 radgraph-hnscc/outputs/
+radgraph-hnscc/outputs_*/
 radgraph-hnscc/outputs_archive_*/
 radgraph-hnscc/logs/
 *.nii

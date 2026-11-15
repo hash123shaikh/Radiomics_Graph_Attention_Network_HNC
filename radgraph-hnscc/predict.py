@@ -14,6 +14,7 @@ Which patients
 
 Examples
   python predict.py --task LR --dataset MAASTRO
+  python predict.py --task LR --models outputs/final_models/MATEUS_CV_LR/imaging --dataset MAASTRO --preprocess v3
   python predict.py --task OS --design MATEUS_COHORT --inputs imaging+clinical --dataset MAASTRO
   python predict.py --task DM --config mrmr__spatial_star --dataset MAASTRO --patients HN1004 HN1006
   python predict.py --task LR --ct new/CT.nii.gz --mask new/GTV.nii.gz --id NEW001
@@ -48,8 +49,11 @@ def main():
     ap.add_argument('--id', default=None, help='identifier for a new patient (--ct/--mask)')
     ap.add_argument('--per_model', action='store_true', help='also write every ensemble member\'s probability')
     ap.add_argument('--out', default=None)
+    ap.add_argument('--preprocess', default=config.PREPROCESS, choices=list(config.PREPROCESS_PROFILES),
+                    help="preprocessing profile the models were trained with (released v0.1.0 models: v3)")
     a = ap.parse_args()
 
+    config.set_preprocess(a.preprocess)
     config.set_mode(a.design)
     config.set_task(a.task)
     clin_flag = a.inputs == 'imaging+clinical'
