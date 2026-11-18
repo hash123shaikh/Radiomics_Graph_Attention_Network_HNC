@@ -568,8 +568,8 @@ For a gentle, illustrated introduction, read the documents in [`paper_workflow_v
 Tested on Ubuntu (Linux 5.15) with Python 3.8, CUDA 11.7 and an NVIDIA GPU. Everything also runs on CPU, but more slowly. Choose one of three environments:
 
 ```bash
-git clone https://github.com/hash123shaikh/GRAFS-GAT.git
-cd GRAFS-GAT/grafs-gat
+git clone https://github.com/hash123shaikh/Radiomics_Graph_Attention_Network_HNC.git
+cd Radiomics_Graph_Attention_Network_HNC/grafs-gat
 
 # (a) conda, with the exact package versions of the published results
 conda env create -f environment.yml && conda activate GNNvenv
@@ -680,7 +680,7 @@ python predict.py --task LR --ct new/CT.nii.gz --mask new/GTV.nii.gz --id NEW001
 
 For each patient the output gives the ensemble probability, the spread across ensemble members, high or low risk at the validation Youden threshold, and the label when it is known.
 
-> **Trained models** are not tracked in git. The models of the manuscript (complete cohort, preprocessing v4; 24 ensembles, 216 checkpoints) are attached to the [GitHub release `v1.0.0-models`](https://github.com/hash123shaikh/GRAFS-GAT/releases/tag/v1.0.0-models). `make verify` downloads them and checks every ensemble against its reported external AUC. To use them yourself, unzip `grafs-gat_final_models_v4.zip` and pass `--models .../final_models/<DESIGN>_<TASK>/<inputs>`. The earlier release [`v0.1.0-models`](https://github.com/hash123shaikh/GRAFS-GAT/releases/tag/v0.1.0-models) holds the models of the superseded 199-patient analysis (preprocessing v3; `make verify-v0`, `--preprocess v3`).
+> **Trained models** are not tracked in git. The models of the manuscript (complete cohort, preprocessing v4; 24 ensembles, 216 checkpoints) are attached to the [GitHub release `v1.0.0-models`](https://github.com/hash123shaikh/Radiomics_Graph_Attention_Network_HNC/releases/tag/v1.0.0-models). `make verify` downloads them and checks every ensemble against its reported external AUC. To use them yourself, unzip `grafs-gat_final_models_v4.zip` and pass `--models .../final_models/<DESIGN>_<TASK>/<inputs>`. The earlier release [`v0.1.0-models`](https://github.com/hash123shaikh/Radiomics_Graph_Attention_Network_HNC/releases/tag/v0.1.0-models) holds the models of the superseded 199-patient analysis (preprocessing v3; `make verify-v0`, `--preprocess v3`).
 
 | Result file (`grafs-gat/outputs/results/`) | Content |
 |---|---|
@@ -717,7 +717,7 @@ The manuscript is in preparation. Until it is published, please cite this reposi
   title        = {Reproducibility and external validity of graph-based feature selection in radiomic
                   graph attention networks for outcome prediction in head and neck cancer},
   year         = {2026},
-  howpublished = {\url{https://github.com/hash123shaikh/GRAFS-GAT}},
+  howpublished = {\url{https://github.com/hash123shaikh/Radiomics_Graph_Attention_Network_HNC}},
   note         = {QIRAIL Lab, Department of Radiation Oncology, Christian Medical College Vellore}
 }
 ```

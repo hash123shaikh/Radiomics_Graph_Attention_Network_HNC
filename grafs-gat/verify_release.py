@@ -23,7 +23,7 @@ import urllib.request
 import zipfile
 from pathlib import Path
 
-REPO = 'https://github.com/hash123shaikh/GRAFS-GAT'
+REPO = 'https://github.com/hash123shaikh/Radiomics_Graph_Attention_Network_HNC'
 # release tag -> (asset file name, top-level folder inside the zip)
 RELEASES = {
     'v1.0.0': ('v1.0.0-models/grafs-gat_final_models_v4.zip', 'grafs-gat_final_models'),        # current study
