@@ -121,8 +121,8 @@ blocks = [
     ('numbered', [
         'Done: complete Head-Neck-PET-CT collection loaded, study re-run with preprocessing v4, manuscript regenerated and '
         'Results and Discussion rewritten.',
-        'Publish the v4 trained models as a new GitHub release and point the README and manuscript to it.',
-        'Fill in the author details, funding, ethics statement and repository URL, and verify every reference.',
+        'Done: v4 trained models published as release v1.0.0-models (24/24 ensembles verified); repository renamed GRAFS-GAT.',
+        'Fill in the author details, funding and ethics statement, and verify every reference.',
     ]),
     ('h2', 'Priority 2: method improvements'),
     ('numbered', [

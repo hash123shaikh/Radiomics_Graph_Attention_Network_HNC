@@ -52,7 +52,7 @@ python predict.py ... --preprocess v3
 Cached files record their profile, so files of a different profile are recomputed, never mixed. If no
 cached features match the selected profile, the pipeline stops with an explanation instead of silently
 creating a new data split. Give a v3 run its own output folder so that it does not replace the v4 cache
-(`make verify` does this automatically with `outputs_verify_v3/`):
+(`make verify-v0` does this automatically with `outputs_verify_v3/`):
 
 ```bash
 GRAFS_PREPROCESS=v3 GRAFS_OUTPUT_DIR=outputs_v3 python predict.py ...
@@ -65,6 +65,11 @@ Complete TCIA Head-Neck-PET-CT collection (298 patients, DICOM CT of the PET/CT 
 2 designs × 2 checkpoint rules) 12 h, no errors. Patient and event counts equal Table 1 of Mateus et al.
 (LR 276/30, DM 276/27, OS 164/44). With `N_JOBS=12`, preprocessing exhausted the 62 GB of RAM and the
 desktop session was killed by systemd-oomd; use `N_JOBS=4` on a 64 GB machine.
+
+## Release v1.0.0-models (18 Nov 2026)
+
+`verify_release.py` on the packaged release zip (`grafs-gat_final_models_v4.zip`, 24 ensembles, 216 checkpoints):
+**24/24** ensembles reproduce their reported external AUC to 4 decimals (e.g. LR, 5-fold CV, imaging: 0.5469).
 
 ## What has been verified (15 Nov 2026; earlier v3 analysis and release v0.1.0-models)
 

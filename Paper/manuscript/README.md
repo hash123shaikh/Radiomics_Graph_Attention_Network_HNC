@@ -31,7 +31,7 @@ wording afterwards, because the direction of some findings may change, and delet
 (`\draftfalse` in `main.tex`).
 
 ## Before submission (to do)
-- Authors, affiliations, funding, CRediT statement, repository URL (placeholders in `main.tex`).
+- Authors, affiliations, funding, CRediT statement (placeholders in `main.tex`).
 - Choose the target journal and switch the reference style if needed
   (`sn-nature` for Scientific Reports / Nature Portfolio).
 - Verify the references in `references.bib`.

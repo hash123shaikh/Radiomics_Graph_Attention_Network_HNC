@@ -568,8 +568,8 @@ For a gentle, illustrated introduction, read the documents in [`paper_workflow_v
 Tested on Ubuntu (Linux 5.15) with Python 3.8, CUDA 11.7 and an NVIDIA GPU. Everything also runs on CPU, but more slowly. Choose one of three environments:
 
 ```bash
-git clone https://github.com/hash123shaikh/Radiomics_Graph_Attention_Network_HNC.git
-cd Radiomics_Graph_Attention_Network_HNC/grafs-gat
+git clone https://github.com/hash123shaikh/GRAFS-GAT.git
+cd GRAFS-GAT/grafs-gat
 
 # (a) conda, with the exact package versions of the published results
 conda env create -f environment.yml && conda activate GNNvenv
@@ -621,13 +621,13 @@ There are four levels of reproduction, from minutes to days. Details and the ver
 | Level | What it reproduces | Needs | Command (in `grafs-gat/`) |
 |---|---|---|---|
 | 0 | the installation works | nothing | `make smoke` |
-| 1 | the external AUCs of the earlier model release `v0.1.0-models` (v3) | MAASTRO data only | `make verify` |
+| 1 | **the published external AUCs**, from the released models (`v1.0.0-models`) | MAASTRO data only | `make verify` |
 | 2 | the full study, retrained from the raw images | both cohorts, GPU (several GPU-days) | `make study` |
 | 3 | every figure, table and number of the manuscript | results of level 2 | `make export && make paper` |
 
 **Current results (18 Nov 2026):** the full study was run on the complete Head-Neck-PET-CT collection with preprocessing v4; all **218 numbers**, tables and figures of the manuscript are regenerated from its results by `make paper`.
 
-**Preprocessing profile.** The study uses **preprocessing v4** (body mask + soft-tissue window), the default everywhere. The older **v3** profile is kept only to run the models of release `v0.1.0-models` (first analysis on 199 patients); `make verify` checks those models (24/24 ensembles reproduced their AUCs on 15 Nov 2026). Select the profile with `--preprocess v3|v4` or `GRAFS_PREPROCESS`. Caches record their profile, so files of different profiles are never mixed.
+**Preprocessing profile.** The study uses **preprocessing v4** (body mask + soft-tissue window), the default everywhere. `make verify` downloads the released models (`v1.0.0-models`) and reproduces all 24 external AUCs (verified 18 Nov 2026: 24/24). The older **v3** profile is kept only to run the superseded release `v0.1.0-models` (first analysis on 199 patients; `make verify-v0`). Select the profile with `--preprocess v3|v4` or `GRAFS_PREPROCESS`. Caches record their profile, so files of different profiles are never mixed.
 
 The pipeline runs as a series of stages. Each stage stores its output, so an interrupted run resumes where it stopped:
 
@@ -680,7 +680,7 @@ python predict.py --task LR --ct new/CT.nii.gz --mask new/GTV.nii.gz --id NEW001
 
 For each patient the output gives the ensemble probability, the spread across ensemble members, high or low risk at the validation Youden threshold, and the label when it is known.
 
-> **Trained models** are not tracked in git. The models of the current study (complete cohort, preprocessing v4) are in `grafs-gat/outputs/final_models/` after a run and will be attached to a new GitHub release. The earlier release [`v0.1.0-models`](https://github.com/hash123shaikh/Radiomics_Graph_Attention_Network_HNC/releases/tag/v0.1.0-models) holds the models of the superseded 199-patient analysis (preprocessing v3); `make verify` downloads and checks them. To use them, unzip `radgraph-hnscc_final_models_v3.zip` and pass `--models .../final_models/<DESIGN>_<TASK>/<inputs> --preprocess v3`.
+> **Trained models** are not tracked in git. The models of the manuscript (complete cohort, preprocessing v4; 24 ensembles, 216 checkpoints) are attached to the [GitHub release `v1.0.0-models`](https://github.com/hash123shaikh/GRAFS-GAT/releases/tag/v1.0.0-models). `make verify` downloads them and checks every ensemble against its reported external AUC. To use them yourself, unzip `grafs-gat_final_models_v4.zip` and pass `--models .../final_models/<DESIGN>_<TASK>/<inputs>`. The earlier release [`v0.1.0-models`](https://github.com/hash123shaikh/GRAFS-GAT/releases/tag/v0.1.0-models) holds the models of the superseded 199-patient analysis (preprocessing v3; `make verify-v0`, `--preprocess v3`).
 
 | Result file (`grafs-gat/outputs/results/`) | Content |
 |---|---|
@@ -717,7 +717,7 @@ The manuscript is in preparation. Until it is published, please cite this reposi
   title        = {Reproducibility and external validity of graph-based feature selection in radiomic
                   graph attention networks for outcome prediction in head and neck cancer},
   year         = {2026},
-  howpublished = {\url{https://github.com/hash123shaikh/Radiomics_Graph_Attention_Network_HNC}},
+  howpublished = {\url{https://github.com/hash123shaikh/GRAFS-GAT}},
   note         = {QIRAIL Lab, Department of Radiation Oncology, Christian Medical College Vellore}
 }
 ```

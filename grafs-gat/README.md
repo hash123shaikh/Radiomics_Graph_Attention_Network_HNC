@@ -17,7 +17,7 @@ Builds on
 | Environment | `conda env create -f environment.yml` (or `docker build -t grafs-gat .`) | [REPRODUCIBILITY.md](REPRODUCIBILITY.md) |
 | Installation test, no data | `make smoke` | synthetic data, ~2 min |
 | Data | `python tools/organize_data.py ...` then `make check` | [DATA.md](DATA.md) |
-| Earlier model release | `make verify` | v0.1.0-models (v3, 199-patient analysis) on MAASTRO, no training |
+| Published external AUCs | `make verify` | released models (v1.0.0-models) on MAASTRO, no training; `make verify-v0` for the superseded v0.1.0 release |
 | Full study | `make study` | preprocessing v4, as in the manuscript |
 | Manuscript assets | `make export && make paper` | every figure, table and number |
 
