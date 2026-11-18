@@ -10,7 +10,7 @@ blocks = [
      'Sections 1 and 2 explain the concepts without assuming a machine-learning background. Section 3 describes exactly what '
      'the network of this study computes, Section 4 how it is trained, and Sections 5 and 6 answer the questions that '
      'clinicians, students and reviewers most often ask. Every number refers to the current implementation and to the '
-     'preliminary results on the 199-patient development image set.'),
+     'results of the full study (complete Head-Neck-PET-CT collection, preprocessing version 4).'),
 
     ('h1', H[0]),
     ('h2', 'What is a graph?'),
@@ -99,7 +99,7 @@ blocks = [
         ['Output layer', '32 weights + 1 bias', '33'],
         ['**Total**', '', '**15,057**'],
     ], [4.2, 8.6, 4.2], 'Trainable parameters of the LR network with clinical input (DM network: 1,841).'),
-    ('p', 'Fifteen thousand parameters is small by deep-learning standards but large relative to 13 development events, which '
+    ('p', 'Fifteen thousand parameters is small by deep-learning standards but large relative to 30 development LR events, which '
           'is why strong dropout, weight decay and early stopping are essential.'),
 
     ('h1', H[3]),
@@ -108,20 +108,20 @@ blocks = [
           'is oversampled. The learning rate rises linearly during a warm-up (10 epochs for LR and OS, 5 for DM) and is halved '
           'when the validation loss stops improving for 20 epochs, with a floor of 10⁻⁵. Gradients are clipped at norm 1.'),
     ('p', 'Training stops when the validation loss has not improved for 50 epochs (maximum 500), and the checkpoint with the '
-          'lowest validation loss is kept, as in RadGraph. As a sensitivity analysis, the checkpoint rule of Mateus et al. is '
+          'lowest validation loss is kept, as in Bae et al. (2025). As a sensitivity analysis, the checkpoint rule of Mateus et al. is '
           'also applied: the epoch with the highest validation AUC among epochs whose training–validation AUC gap is at most '
           '0.05. Each configuration is trained with three random seeds and the predictions are averaged.'),
     ('note', 'warn', 'Corrections to version 1',
      'Version 1 described an input projection layer, ELU activations, a batch-normalised clinical projection, GTV-relative '
      'scaling, cosine similarity for supervoxel selection and early stopping on validation AUC after 15 epochs. None of these is '
-     'part of the RadGraph code or of the current implementation: the network starts directly with a GAT layer, uses ReLU and '
+     'part of the original code (Bae et al. 2025) or of the current implementation: the network starts directly with a GAT layer, uses ReLU and '
      'layer normalisation, concatenates the clinical variables unchanged, scales all nodes with the training GTV statistics, '
      'selects supervoxels by Euclidean distance and stops on the validation loss.'),
 
     ('h1', H[4]),
     ('h2', 'Q1. What is the read-out, and why only the GTV?'),
     ('p', 'After five layers every node has a 16-dimensional representation, but one prediction per patient is needed. Many '
-          'graph networks average all nodes. RadGraph instead keeps only the GTV node, because the GTV has received attention-'
+          'graph networks average all nodes. This design keeps only the GTV node, because the GTV has received attention-'
           'weighted messages from the surrounding tissue at every layer and is the clinically meaningful anchor. The supervoxel '
           'representations are therefore not discarded information: their content has already been passed into the GTV.'),
     ('code', '21 node vectors after layer 5\n'
@@ -148,9 +148,10 @@ blocks = [
         ['Model', 'random forest, logistic regression', 'graph attention network'],
         ['Interaction between regions', 'not modelled', 'learned through message passing'],
     ], [4.6, 5.6, 6.8], 'Conventional radiomics versus the radiomic graph network.'),
-    ('p', 'In this study the GAT outperformed a random forest trained on exactly the same GTV features for 7 of 9 feature sets '
-          'in cross-validation for LR (mean external AUC 0.59 versus 0.57), which suggests that the peritumoral tissue adds '
-          'some information, although none of these differences was significant.'),
+    ('p', 'In this study a random forest trained on exactly the same GTV features was as good as the GAT: for LR the GAT was '
+          'better for only 3 of 9 feature sets (mean external AUC 0.58 versus 0.59 in cross-validation), and for DM and OS the '
+          'two were equivalent or the forest slightly better. With the events available here, the peritumoral graph therefore '
+          'added no measurable information beyond the tumour itself.'),
     ('h2', 'Q5. What is the AUC, and why are confidence intervals essential?'),
     ('p', 'The area under the ROC curve (AUC) is the probability that a randomly chosen patient with the event receives a '
           'higher predicted risk than a randomly chosen patient without it: 0.5 is chance and 1.0 perfect separation. Unlike '
@@ -160,37 +161,39 @@ blocks = [
     ('h2', 'Q6. What do the attention maps show?'),
     ('p', 'Attention weights of the final layer can be mapped back onto the CT, giving a map of the regions the GTV attended '
           'to. In this study, however, attention was almost uniform: across all 121 external LR patients, 98% of the '
-          'supervoxel weights lay within ±1.2% of the patient mean, and the ratio between the largest and smallest weight in a '
-          'patient was typically 1.015. The network therefore behaved essentially as an averaging aggregator, and the maps '
+          'supervoxel weights lay within ±2.9% of the patient mean, and the ratio between the largest and smallest weight in a '
+          'patient was typically 1.024. The network therefore behaved essentially as an averaging aggregator, and the maps '
           'cannot be interpreted as localising risk. Likely reasons are the small number of training events, the strong '
           'attention dropout and the similarity of the selected supervoxels to each other.'),
     ('fig', 'fig_attention_ct.png', 16.0, 'Attention for an external patient with locoregional recurrence (HN1792). The weights '
      'range only from 0.047 to 0.048, against a uniform value of 0.048.'),
     ('h2', 'Q7. Why six features, and how are they selected?'),
-    ('p', 'With 13 development events, a network with many input features overfits, so a small feature set is necessary. '
-          'RadGraph used fixed endpoint-specific sets (four features for LR). This study compares nine strategies at an equal '
-          'size of six features: the RadGraph set, all features, four supervised selectors (mRMR, LASSO, Boruta, RFE with a '
+    ('p', 'With 27–44 development events, a network with many input features overfits, so a small feature set is necessary. '
+          'Bae et al. (2025) used fixed endpoint-specific sets (four features for LR). This study compares nine strategies at an equal '
+          'size of six features: the published feature set, all features, four supervised selectors (mRMR, LASSO, Boruta, RFE with a '
           'random forest) and three graph-based variants. All are fitted on training patients only.'),
     ('h2', 'Q8. What is graph-based feature selection?'),
     ('p', 'Radiomic features are strongly correlated; many texture features measure almost the same property. Graph-FS '
           'builds a graph in which features are nodes and highly correlated features are connected, finds communities of '
           'redundant features and keeps one representative per community. Because the community structure hardly changes when '
           'the training patients change, the selection is stable. The spectral variant was the most stable strategy in this '
-          'study (Kuncheva index 0.64–0.73 across folds, against 0.11–0.34 for LASSO). However, label-free Graph-FS ignores the '
-          'outcome, and its stable features were not more predictive. The hybrid variant introduced in this study keeps the '
-          'graph but chooses the most outcome-relevant feature in each community.'),
+          'study (Kuncheva index 0.71–0.84 across folds, against 0.16–0.29 for LASSO). However, label-free Graph-FS ignores the '
+          'outcome, and its stable features were among the least predictive: across selectors, stability and external AUC were '
+          'inversely related (Spearman ρ −0.92 for LR). The hybrid variant introduced in this study keeps the graph but chooses '
+          'the most outcome-relevant feature in each community, and was intermediate in both stability and discrimination.'),
     ('fig', 'fig_graphfs_workflow.png', 17.0, 'Graph-based feature selection on the training data of the first fold (LR).'),
     ('h2', 'Q9. Why compare four topologies?'),
-    ('p', 'The radiomic star of RadGraph selects supervoxels that resemble the GTV, which may lie anywhere in the 5 cm box, '
+    ('p', 'The radiomic star (Bae et al. 2025) selects supervoxels that resemble the GTV, which may lie anywhere in the 5 cm box, '
           'including skin or air. The spatial star selects the regions immediately around the tumour, where microscopic '
           'extension is expected. The kNN graphs test whether direct communication between regions helps. In this study the '
-          'four topologies gave nearly identical mean LR AUCs (0.59–0.62); for OS, radiomic topologies tended to do better.'),
+          'four topologies gave nearly identical mean LR (0.55–0.57) and OS (0.62–0.64) AUCs; for DM, radiomic topologies tended '
+          'to do better (0.63–0.64 versus 0.57–0.60), without significance after correction.'),
     ('h2', 'Q10. What does the network learn?'),
     ('p', 'It learns the projection matrices and attention vectors of every head and layer, the layer-normalisation scales and '
           'shifts, and the output weights that combine the GTV representation with the clinical variables (Section 3).'),
     ('h2', 'Q11. What happens if a patient has fewer than 20 supervoxels?'),
     ('p', 'The graph then contains all available supervoxels, and PyTorch Geometric handles graphs of different sizes in the '
-          'same batch. In practice it never occurred: every patient in this study had exactly 100 supervoxels.'),
+          'same batch. In practice it never occurred: every patient in this study had 98–100 supervoxels.'),
     ('h2', 'Q12. What is over-smoothing?'),
     ('p', 'After many layers all node representations become similar, because each is an average of an ever larger '
           'neighbourhood. Five layers on a 21-node graph is close to this limit. Layer normalisation and dropout mitigate it, and '
@@ -202,22 +205,22 @@ blocks = [
           'no information from validation or test patients leaks into the model. This replaces the single random 70/15/15 '
           'split of version 1, whose test set contained only 19 patients.'),
     ('h2', 'Q14. Why did validation performance not identify the best external model?'),
-    ('p', 'Each cross-validation fold contains only two or three LR events, so validation AUC is extremely noisy. When more than '
+    ('p', 'Each cross-validation fold contains only about six LR events, so validation AUC is very noisy. When more than '
           'one hundred configurations are compared, the best validation result largely reflects chance. Across configurations, '
-          'the correlation between validation and external AUC ranged from −0.46 to 0.20. Reporting a pre-specified reference '
+          'the correlation between validation and external AUC ranged from 0.07 to 0.59. Reporting a pre-specified reference '
           'configuration and the distribution over the whole grid is therefore more informative than reporting the winner.'),
     ('fig', 'fig8_val_vs_test.png', 16.0, 'Validation AUC versus external AUC for every configuration.'),
     ('h2', 'Q15. How does this compare with the published CNN?'),
-    ('p', 'Mateus et al. trained a convolutional neural network on the same collections with the same designs. For LR the '
-          'radiomic GAT reached 0.71 with clinical data in the cohort split versus 0.59 for the CNN, and was similar in '
-          'cross-validation. For DM and OS the CNN was clearly better; the development data of this study contain less than half '
-          'of the events available to the CNN and only oropharyngeal tumours.'),
+    ('p', 'Mateus et al. trained a convolutional neural network on the same collections with the same designs. The two '
+          'approaches were similar for LR (both close to chance, 0.53–0.62) and OS (GAT 0.62–0.65, CNN 0.63–0.69), but the CNN '
+          'was clearly better for DM (0.83–0.93 versus 0.62–0.73). For DM a clinical-only random forest (0.82) was also better '
+          'than the GAT, consistent with distant failure being driven by nodal stage and by disease outside the peritumoral box.'),
     ('h2', 'Q16. What are the main limitations?'),
     ('bullets', [
-        'Small, event-poor development set (199 of 298 patients with images, all oropharyngeal).',
+        'Event-poor development set (30 LR, 27 DM, 44 OS events) despite the complete collection.',
         'Only seven external DM events.',
-        'About one fifth of supervoxels lie mostly in air, and the intensity normalisation compresses soft-tissue contrast.',
-        'Hyper-parameters adopted from RadGraph rather than tuned; OS reuses the LR settings.',
+        'Development CT is the CT of the PET/CT, whereas MAASTRO provides planning CT; subsite and treatment differ between cohorts.',
+        'Hyper-parameters adopted from Bae et al. (2025) rather than tuned; OS reuses the LR settings.',
         'Binary horizons exclude censored patients; survival models would use the data more efficiently.',
         'Attention is near-uniform and cannot yet support clinical interpretation.',
     ]),
@@ -250,7 +253,7 @@ if __name__ == '__main__':
     d = Doc('Graph Attention Networks in Radiomics',
             'Concepts, implementation and frequently asked questions for the radiomic graph attention network',
             'Graph attention networks explained',
-            'Supersedes GAT_Questions_and_Answers (May 2026). Describes the current implementation (radgraph/models/gat.py).')
+            'Supersedes GAT_Questions_and_Answers (May 2026). Describes the current implementation (grafsgat/models/gat.py).')
     d.contents(H)
     d.add(blocks)
     print(d.save('02_Graph_Attention_Networks_Explained_v2'))

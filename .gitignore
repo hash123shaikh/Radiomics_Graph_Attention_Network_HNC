@@ -1,11 +1,11 @@
 # ---------------------------------------------------------------------------
 # Patient data and patient-derived files: NEVER commit
 # ---------------------------------------------------------------------------
-radgraph-hnscc/data/
-radgraph-hnscc/outputs/
-radgraph-hnscc/outputs_*/
-radgraph-hnscc/outputs_archive_*/
-radgraph-hnscc/logs/
+grafs-gat/data/
+grafs-gat/outputs/
+grafs-gat/outputs_*/
+grafs-gat/outputs_archive_*/
+grafs-gat/logs/
 *.nii
 *.nii.gz
 *.dcm
@@ -30,7 +30,7 @@ CodeRelease/
 Paper/Mateus_reproducibilty_paper.pdf
 Paper/Graph_Feature_Selection_Technique.pdf
 Paper/Supplementary Material - Graph_Feature_Selection_Technique.docx
-Paper/RadGraph.pdf
+Paper/Bae2025_spatial_radiomic_graphs.pdf
 Paper/appendix_&_supplementary.pdf
 Paper/Abstract_ASTRO --- GNN_predict_LR.pdf
 
@@ -40,7 +40,7 @@ Paper/Abstract_ASTRO --- GNN_predict_LR.pdf
 # ---------------------------------------------------------------------------
 # Build artefacts
 # ---------------------------------------------------------------------------
-Paper/RadGraph-FS_manuscript.zip
+Paper/GRAFS-GAT_manuscript.zip
 __pycache__/
 *.py[cod]
 .ipynb_checkpoints/

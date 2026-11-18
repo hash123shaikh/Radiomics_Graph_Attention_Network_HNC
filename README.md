@@ -1,6 +1,6 @@
 <div align="center">
 
-# Radiomic Graph Attention Network for Head and Neck Cancer
+# GRAFS-GAT: Graph Feature Selection with Graph Attention Networks for Head and Neck Cancer
 
 **Reproducibility and external validity of graph-based feature selection in radiomic graph attention networks for outcome prediction in head and neck cancer**
 
@@ -44,7 +44,7 @@ QIRAIL Lab · Department of Radiation Oncology · Christian Medical College (CMC
 
 ## 1. Summary
 
-This project predicts three outcomes after radiotherapy for **head and neck squamous cell carcinoma (HNSCC)** from the planning CT:
+This project predicts three outcomes after radiotherapy for **head and neck squamous cell carcinoma (HNSCC)** from the pretreatment CT:
 
 | Endpoint | Definition |
 |---|---|
@@ -52,14 +52,14 @@ This project predicts three outcomes after radiotherapy for **head and neck squa
 | **DM**: distant metastasis | event within 2 years |
 | **OS**: overall survival | death from any cause within 4 years |
 
-Each patient's tumour and the tissue around it are turned into a **graph**, and a **graph attention network (GAT)** learns from it. The study tests two design questions that earlier work fixed by hand:
+**GRAFS-GAT** (GRAph Feature Selection + Graph ATtention network) turns each patient's tumour and the tissue around it into a **graph**, chooses the radiomic features of its nodes by **graph-based feature selection**, and lets a **graph attention network (GAT)** learn from it. It is benchmarked against the published CNN of Mateus et al. (2023) on the same public patients. The study tests two design questions that earlier work fixed by hand:
 
 1. **Which radiomic features should describe the graph nodes?** Nine feature-selection strategies are compared, including the graph-based method *Graph-FS* and a new *hybrid* variant.
 2. **How should the nodes be connected?** Four graph topologies are compared.
 
 Every combination is judged on **how well it predicts** on an independent hospital it never saw (external validation) and on **how reproducible its selected features are**.
 
-**Main findings, in one paragraph.** Graph-based feature selection made the selected features **much more reproducible**: the Kuncheva index across CV folds was 0.64–0.73 for spectral Graph-FS against 0.11–0.34 for LASSO. More reproducible features did **not** predict better, however. For **locoregional recurrence**, the radiomic graph network reached an external AUC of **0.71 (95% CI 0.62–0.81)**, higher than a published CNN on the same external cohort (0.59). Even so, no configuration was significantly better than the original RadGraph configuration. **Distant metastasis and overall survival could not be predicted** with the outcome events available. Finally, **validation AUC did not tell us which models would generalise** (Spearman ρ −0.40 to 0.20). This lesson applies to any study that compares many models on small cohorts.
+**Main findings, in one paragraph.** On the complete public cohorts (298 Canadian development patients, 137 external MAASTRO patients), graph-based feature selection made the selected features **much more reproducible**: the Kuncheva index across CV folds was 0.71–0.84 for spectral Graph-FS against 0.16–0.29 for LASSO. More reproducible features did **not** predict better; across selectors, stability was *inversely* related to external AUC (Spearman ρ = −0.92 for LR). The configurations chosen on validation reached external AUCs of **0.54–0.66 for locoregional recurrence, 0.66–0.73 for distant metastasis and 0.62–0.66 for overall survival**, and none was significantly better than the pre-specified reference configuration. The GAT matched a published CNN on the same external patients for LR and OS but not for DM, where a **clinical-only model was best (AUC 0.82)**, and a random forest on the tumour features alone did as well as the graph network. Finally, **validation AUC was a poor guide to which models would generalise** (Spearman ρ 0.07–0.59). This lesson applies to any study that compares many models on small cohorts.
 
 ---
 
@@ -81,7 +81,7 @@ HNSCC is one of the ten most common cancers worldwide. Most patients with locall
 
 | Study | What it contributed | What it left open |
 |---|---|---|
-| **RadGraph** (Bae et al., 2025) | Represents each patient as a graph: the tumour (GTV) is the central node and peritumoral **supervoxels** are surrounding nodes. A GAT gathers information from the surroundings into the tumour node. | The node features were a small **fixed** set, and the graph wiring (the "radiomic star") was **fixed**. Neither choice was tested, and the reproducibility of the features was unknown. |
+| **Spatial radiomic graphs** (Bae et al., 2025) | Represents each patient as a graph: the tumour (GTV) is the central node and peritumoral **supervoxels** are surrounding nodes. A GAT gathers information from the surroundings into the tumour node. | The node features were a small **fixed** set, and the graph wiring (the "radiomic star") was **fixed**. Neither choice was tested, and the reproducibility of the features was unknown. |
 | **Graph-FS** (Moradmand et al., 2025) | Feature selection on a **graph of features**: correlated features form communities, and one representative is kept per community. Much more stable than LASSO, Boruta, RFE or mRMR. | Never combined with graph neural networks, and never tested for externally validated outcome prediction. |
 | **Mateus et al.** (2023) | A **reproducible validation protocol** on public data (Canadian centres → Dutch cohort). It showed that reported performance depends strongly on the validation design and on how the training checkpoint is chosen. | Gives a published CNN benchmark on exactly the same external patients. |
 
@@ -129,18 +129,18 @@ HNSCC is one of the ten most common cancers worldwide. Most patients with locall
 
 ```mermaid
 flowchart LR
-    A["Head-Neck-PET-CT<br/>CHUM · CHUS · HGJ · HMR<br/>(n = 199)"] --> B["Preprocessing<br/>1 mm resampling · 50 mm box<br/>SLIC-zero supervoxels"]
+    A["Head-Neck-PET-CT<br/>CHUM · CHUS · HGJ · HMR<br/>(n = 294)"] --> B["Preprocessing<br/>1 mm resampling · 50 mm box<br/>body mask · soft-tissue window<br/>SLIC-zero supervoxels"]
     B --> C["PyRadiomics<br/>93 features per node"]
     C --> D["Feature selection (9)<br/>fitted on training folds"]
     D --> E["Graph topology (4)<br/>GTV + 20 supervoxels"]
-    E --> F["RadGraph GAT<br/>± clinical variables<br/>3 seeds"]
+    E --> F["GRAFS-GAT<br/>± clinical variables<br/>3 seeds"]
     F --> G{"Model selection<br/>on validation AUC"}
     G --> H["External test, once<br/>MAASTRO HN1 (n = 137)"]
     H --> I["AUC + 95% bootstrap CI<br/>DeLong (Holm) · stability"]
 ```
 
 ### Cohorts
-* **Development:** the public **Head-Neck-PET-CT** collection (TCIA) from four hospitals in Québec, Canada: CHUM, CHUS, HGJ and HMR. 199 patients had a CT with a primary GTV.
+* **Development:** the public **Head-Neck-PET-CT** collection (TCIA) from four hospitals in Québec, Canada: CHUM, CHUS, HGJ and HMR. All 298 patients are used (CT of the pretreatment PET/CT with its radiotherapy structure set); 294 have enough follow-up for at least one endpoint.
 * **External test:** the public **HN1** collection from MAASTRO Clinic, the Netherlands (137 patients). These patients were **never** used for feature selection, scaling, training or model choice. They were evaluated exactly once.
 
 ### Endpoints
@@ -166,7 +166,7 @@ In both designs, the configuration with the best **validation** AUC is chosen an
 | Factor | Levels |
 |---|---|
 | Endpoints | 3 (LR, DM, OS) |
-| Feature-selection strategies | 9 (8 for OS, which has no RadGraph reference set) |
+| Feature-selection strategies | 9 (8 for OS, which has no reference set) |
 | Graph topologies | 4 |
 | Input sets | 2 (imaging only; imaging + clinical) |
 | Development designs | 2 (5-fold CV; cohort split) |
@@ -192,7 +192,7 @@ This gives 144 GAT configurations per endpoint for LR and DM and 128 for OS, eac
 6. **Prediction.** A linear layer and a sigmoid give the probability of the event.
 
 ### Hyper-parameters
-The hyper-parameters are taken from RadGraph and were not tuned here, so that the comparison isolates the effect of features and topology:
+The hyper-parameters are taken from Bae et al. (2025) and were not tuned here, so that the comparison isolates the effect of features and topology:
 
 | Hyper-parameter | LR / OS | DM |
 |---|---|---|
@@ -203,9 +203,9 @@ The hyper-parameters are taken from RadGraph and were not tuned here, so that th
 | Trainable parameters (with clinical inputs) | 15,057 | 1,841 |
 | Loss / class balancing | BCE, per-epoch resampling of both classes to the mean class size | BCE, minority oversampling |
 | Optimiser | Adam + linear warm-up, ReduceLROnPlateau, gradient clipping, early stopping (patience 50) | same |
-| Checkpoint kept | lowest validation loss (RadGraph); Mateus AUC-gap rule as a sensitivity analysis | same |
+| Checkpoint kept | lowest validation loss (Bae et al. 2025); Mateus AUC-gap rule as a sensitivity analysis | same |
 
-The networks are deliberately **small**: about 15k parameters for LR and fewer than 2k for DM. With only 12–19 events in the development data, a larger network would simply memorise the training patients.
+The networks are deliberately **small**: about 15k parameters for LR and fewer than 2k for DM. With only 27–44 events in the development data, a larger network would simply memorise the training patients.
 
 ---
 
@@ -216,7 +216,8 @@ The networks are deliberately **small**: about 15k parameters for LR and fewer t
 | Step | What is done | Why |
 |---|---|---|
 | Resampling | CT to **1 mm isotropic** voxels (linear); GTV mask with nearest neighbour | Patients scanned with different slice thicknesses become comparable. |
-| Peritumoral region | Crop a box extending **50 mm** beyond the GTV and remove the GTV voxels | Defines "the surroundings" in the same way as RadGraph. |
+| Peritumoral region | Crop a box extending **50 mm** beyond the GTV and remove the GTV voxels | Defines "the surroundings" in the same way as Bae et al. (2025). |
+| Body mask + window | Region restricted to the patient body (CT > −500 HU, largest component, holes filled); CT clipped to −160…240 HU for SLIC only | Without them ~25% of supervoxels were mostly air and SLIC followed air/bone edges; with them 0% (preprocessing v4). |
 | Supervoxels | **SLIC-zero** splits the region into ~100 supervoxels; those under 8 voxels are discarded | Splits the surroundings into anatomically coherent pieces that become graph nodes. |
 | Radiomics | **93 PyRadiomics features** per node, bin width 25 HU: 18 first-order, 24 GLCM, 16 GLRLM, 16 GLSZM, 14 GLDM, 5 NGTDM | Standard, IBSI-aligned intensity and texture descriptors. **Shape** features are excluded because a supervoxel's shape reflects the algorithm, not the tissue. |
 
@@ -226,7 +227,7 @@ Before selection, near-constant features are removed, heavy-tailed features (|sk
 
 | Strategy | Type | How it chooses features |
 |---|---|---|
-| `table_s3` | reference | The fixed RadGraph feature set (Table S3 of the original paper; 4 features for LR, 6 for DM). |
+| `table_s3` | reference | The fixed published feature set (Bae et al. 2025, Table S3; 4 features for LR, 6 for DM). |
 | `all` | reference | All 93 features, no selection. |
 | `mrmr` | supervised | Greedily picks features with high relevance to the outcome (ANOVA F) and low redundancy with features already picked. Used as the OS reference. |
 | `lasso` | supervised | L1-penalised logistic regression; features ranked by when they enter the regularisation path. |
@@ -261,7 +262,7 @@ The figure shows the steps on real training data (fold 1, LR: 152 patients, 11 e
 
 | Topology | Edges | Idea it tests |
 |---|---|---|
-| **(a)** `radiomic_star` (RadGraph) | GTV ↔ the 20 supervoxels **most similar to it in feature space** | Tissue that "looks like" tumour matters, wherever it is. |
+| **(a)** `radiomic_star` (reference) | GTV ↔ the 20 supervoxels **most similar to it in feature space** | Tissue that "looks like" tumour matters, wherever it is. |
 | **(b)** `spatial_star` | GTV ↔ the 20 supervoxels **nearest to it in physical space** | The immediate surroundings matter, which is how invasion actually spreads. |
 | **(c)** `radiomic_knn` | radiomic star + edges between each node and its 4 nearest neighbours in feature space | Supervoxels can also exchange information with each other. |
 | **(d)** `spatial_knn` | spatial star + edges between each node and its 4 nearest physical neighbours | The same, along anatomical neighbourhoods. |
@@ -272,7 +273,7 @@ In the radiomic star **(a)**, the connected supervoxels can lie far from the tum
 
 These comparators are what make the conclusions about the GAT meaningful:
 
-* **Reference GAT:** the published RadGraph configuration (Table S3 features + radiomic star). For OS, which has no published set, mRMR + radiomic star. Every other configuration is tested **against this reference**.
+* **Reference GAT:** the pre-specified reference configuration (Table S3 features + radiomic star). For OS, which has no published set, mRMR + radiomic star. Every other configuration is tested **against this reference**.
 * **Random forest on the same GTV features:** it sees the tumour but not the surroundings. If the GAT beats it, the **peritumoral graph** adds information.
 * **Clinical-only random forest:** shows what can be achieved without any imaging.
 
@@ -289,50 +290,52 @@ These comparators are what make the conclusions about the GAT meaningful:
 
 ## 7. Results
 
+All results below come from the complete Head-Neck-PET-CT collection (298 patients) with preprocessing v4 (body mask + soft-tissue window), run on 17–18 November 2026. Every number is regenerated from `grafs-gat/outputs/results/` by `make_paper_assets.py`.
+
 ### 7.1 Patient cohorts
 
 | | Head-Neck-PET-CT (training / validation) | MAASTRO HN1 (external test) |
 |---|---|---|
-| Patients with CT and GTV | 199 | 137 |
-| Age, median (IQR), y | 63 (57–70) | 61 (56–67) |
-| Male sex | 147 (74%) | 111 (81%) |
-| HPV positive / negative / unknown | 74 / 19 / 106 | 23 / 58 / 56 |
-| Oropharynx / larynx | 199 / 0 | 88 / 49 |
-| Concurrent chemotherapy | 173 (87%) | 37 (27%) |
-| **LR**, patients (events) | 190 (13, 6.8%) | 121 (30, 24.8%) |
-| **DM**, patients (events) | 191 (12, 6.3%) | 109 (7, 6.4%) |
-| **OS**, patients (events) | 92 (19, 20.7%) | 135 (45, 33.3%) |
+| Patients analysed | 294 | 137 |
+| Age, median (IQR), y | 63 (57–71) | 61 (56–67) |
+| Male sex | 224 (76%) | 111 (81%) |
+| HPV positive / negative / unknown | 76 / 46 / 172 | 23 / 58 / 56 |
+| Oropharynx / larynx / other | 201 / 43 / 50 | 88 / 49 / 0 |
+| N2–N3 | 198 (67%) | 61 (45%) |
+| Concurrent chemotherapy | 248 (84%) | 37 (27%) |
+| **LR**, patients (events) | 276 (30, 10.9%) | 121 (30, 24.8%) |
+| **DM**, patients (events) | 276 (27, 9.8%) | 109 (7, 6.4%) |
+| **OS**, patients (events) | 164 (44, 26.8%) | 135 (45, 33.3%) |
 
-**What this table tells us.** The two cohorts are clearly different populations:
+**What this table tells us.** The patient and event counts match Table 1 of Mateus et al. exactly, so the comparison with their CNN is on the same patients. The two cohorts nevertheless differ:
 
-* All development patients had **oropharyngeal** cancer, whereas a third of the test patients had **laryngeal** cancer.
-* HPV-positive disease and chemotherapy were much more common in Canada.
-* Most importantly, **events are very scarce** in the development data: only 13 LR, 12 DM and 19 OS events. Each CV validation fold therefore contained only **2–3 LR or DM events**. This one fact explains much of what follows.
-
-The image set available here covers 199 of the 298 eligible Canadian patients. The patients without images carried more than half of the events (30 LR, 27 DM and 44 OS events in the full clinical file).
+* Laryngeal cancer is more than twice as common in MAASTRO (36% vs 15%).
+* HPV-positive disease, advanced nodal stage and concurrent chemotherapy are much more common in Canada.
+* The LR event rate is more than twice as high externally (24.8% vs 10.9%), whereas MAASTRO has only **7 DM events**.
+* Events are scarce in the development data: 30 LR, 27 DM and 44 OS events, so each CV validation fold contains only about **6 LR or DM events**.
 
 ### 7.2 External performance: the main table
 
 **How to read the table:**
 * *Val. AUC* is the score used to **choose** the configuration.
 * *Test AUC* is the honest external result on MAASTRO, with a 95% CI.
-* *Reference* is the published RadGraph configuration.
+* *Reference* is the pre-specified reference configuration (mRMR + radiomic star for OS).
 * *p* is the Holm-corrected DeLong test of the chosen GAT against the reference; *p* ≥ 0.05 means no significant difference.
 
 | Endpoint | Design | Inputs | Chosen GAT (configuration) | Val. AUC | **Test AUC, chosen GAT** | Test AUC, reference GAT | Test AUC, RF | Test AUC, clinical-only RF | *p* |
 |---|---|---|---|:-:|:-:|:-:|:-:|:-:|:-:|
-| **LR** | 5-fold CV | Img | Boruta + radiomic kNN | 0.71 | 0.61 [0.50, 0.72] | 0.63 [0.51, 0.75] | 0.56 [0.45, 0.68] | – | 1.00 |
-| | 5-fold CV | Img+Clin | All + radiomic kNN | 0.74 | 0.58 [0.46, 0.69] | 0.69 [0.59, 0.80] | – | 0.66 [0.56, 0.76] | 1.00 |
-| | Cohort split | Img | All + radiomic kNN | 0.75 | 0.63 [0.51, 0.75] | 0.52 [0.41, 0.64] | 0.56 [0.44, 0.68] | – | 1.00 |
-| | Cohort split | Img+Clin | Graph-FS (spectral) + radiomic kNN | 0.80 | **0.71 [0.62, 0.81]** | 0.55 [0.43, 0.67] | – | 0.63 [0.52, 0.75] | 0.72 |
-| **DM** | 5-fold CV | Img | All + radiomic kNN | 0.64 | 0.66 [0.49, 0.82] | 0.41 [0.24, 0.58] | 0.58 [0.34, 0.79] | – | 0.24 |
-| | 5-fold CV | Img+Clin | All + radiomic kNN | 0.56 | 0.65 [0.44, 0.85] | 0.60 [0.32, 0.85] | – | 0.80 [0.70, 0.89] | 1.00 |
-| | Cohort split | Img | RFE-RF + spatial star | 0.81 | 0.36 [0.14, 0.60] | 0.40 [0.22, 0.56] | 0.60 [0.43, 0.77] | – | 1.00 |
-| | Cohort split | Img+Clin | All + radiomic star | 0.75 | 0.19 [0.10, 0.31] | 0.68 [0.44, 0.87] | – | 0.70 [0.57, 0.81] | <0.01 |
-| **OS** | 5-fold CV | Img | Graph-FS (spectral) + spatial kNN | 0.69 | 0.46 [0.35, 0.56] | 0.62 [0.52, 0.72] | 0.52 [0.41, 0.62] | – | 0.20 |
-| | 5-fold CV | Img+Clin | Graph-FS (spectral) + spatial kNN | 0.69 | 0.47 [0.36, 0.57] | 0.66 [0.56, 0.75] | – | 0.60 [0.51, 0.69] | 0.11 |
-| | Cohort split | Img | Graph-FS (spectral) + spatial kNN | 0.73 | 0.45 [0.35, 0.56] | 0.56 [0.46, 0.66] | 0.52 [0.42, 0.63] | – | 1.00 |
-| | Cohort split | Img+Clin | Graph-FS (spectral) + spatial kNN | 0.73 | 0.48 [0.37, 0.57] | 0.62 [0.52, 0.73] | – | 0.42 [0.32, 0.53] | 0.56 |
+| **LR** | 5-fold CV | Img | Graph-FS (hybrid) + spatial kNN | 0.66 | 0.55 [0.43, 0.67] | 0.63 [0.50, 0.75] | 0.61 [0.48, 0.74] | – | 1.00 |
+| | 5-fold CV | Img+Clin | RFE-RF + spatial kNN | 0.69 | 0.66 [0.52, 0.78] | 0.66 [0.54, 0.79] | – | 0.58 [0.48, 0.69] | 1.00 |
+| | Cohort split | Img | Graph-FS (spectral) + radiomic kNN | 0.64 | 0.55 [0.43, 0.67] | 0.40 [0.25, 0.53] | 0.46 [0.34, 0.59] | – | 1.00 |
+| | Cohort split | Img+Clin | LASSO + spatial kNN | 0.68 | 0.54 [0.41, 0.66] | 0.47 [0.32, 0.60] | – | 0.54 [0.44, 0.66] | 1.00 |
+| **DM** | 5-fold CV | Img | mRMR + radiomic kNN | 0.72 | 0.68 [0.40, 0.92] | 0.61 [0.36, 0.78] | 0.55 [0.25, 0.83] | – | 1.00 |
+| | 5-fold CV | Img+Clin | LASSO + radiomic kNN | 0.73 | 0.66 [0.37, 0.94] | 0.72 [0.56, 0.88] | – | **0.82 [0.71, 0.93]** | 1.00 |
+| | Cohort split | Img | Graph-FS (hybrid) + radiomic kNN | 0.82 | 0.73 [0.55, 0.91] | 0.66 [0.52, 0.79] | 0.53 [0.25, 0.79] | – | 1.00 |
+| | Cohort split | Img+Clin | Graph-FS (hybrid) + radiomic kNN | 0.85 | 0.73 [0.57, 0.90] | 0.77 [0.63, 0.88] | – | 0.78 [0.68, 0.87] | 1.00 |
+| **OS** | 5-fold CV | Img | All + radiomic kNN | 0.71 | 0.64 [0.53, 0.74] | 0.64 [0.53, 0.75] | 0.66 [0.56, 0.77] | – | 1.00 |
+| | 5-fold CV | Img+Clin | Graph-FS (hybrid) + radiomic star | 0.71 | 0.66 [0.55, 0.76] | 0.65 [0.54, 0.76] | – | 0.70 [0.60, 0.79] | 1.00 |
+| | Cohort split | Img | Graph-FS (spectral) + radiomic kNN | 0.72 | 0.62 [0.52, 0.72] | 0.63 [0.52, 0.73] | 0.64 [0.54, 0.74] | – | 1.00 |
+| | Cohort split | Img+Clin | All + radiomic star | 0.73 | 0.64 [0.53, 0.74] | 0.64 [0.53, 0.75] | – | 0.66 [0.56, 0.75] | 1.00 |
 
 <p align="center">
   <img src="Paper/manuscript/figures/fig_roc_all.png" width="100%" alt="External ROC curves">
@@ -341,16 +344,10 @@ The image set available here covers 199 of the 298 eligible Canadian patients. T
 
 #### What the main table shows
 
-* **Locoregional recurrence carries a real but modest signal.**
-  - The best external result was **0.71 [0.62–0.81]** (cohort split, imaging + clinical), well above chance and above the clinical-only model (0.63).
-  - Across the whole grid of 144 LR configurations, **93% scored above 0.5** (median 0.62, range 0.37–0.72). LR is the only endpoint where the radiomic graph worked consistently.
-* **No configuration beat the published RadGraph reference significantly** (all *p* ≥ 0.72 for LR). In 5-fold CV the reference was even numerically the better GAT (0.63 and 0.69). Tuning features and topology did **not** bring a reliable improvement.
-* **Distant metastasis is unpredictable here.**
-  - With only **7 external DM events**, the confidence intervals span most of the 0–1 range.
-  - The chosen models varied from 0.19 to 0.66.
-  - Every DM configuration that differed significantly from the reference (7 of 144) was **worse**.
-  - The strongest DM model was the **clinical-only** random forest (0.80). This fits nodal stage being the main driver of distant spread.
-* **Overall survival failed with the chosen models** (0.45–0.48). Yet the pre-specified mRMR reference reached 0.62–0.66. The data-driven choice on validation picked the *wrong* models: see [7.6](#76-validation-auc-does-not-predict-external-auc).
+* **No configuration beat the pre-specified reference significantly** (all *p* = 1.00 for the chosen models). For LR and OS no configuration in the whole grid differed significantly from the reference; the 8 DM configurations that did were all **worse**.
+* **Locoregional recurrence is barely predictable externally.** The chosen GATs reached 0.54–0.66 and every confidence interval includes or approaches 0.5. Across the 144 LR configurations the median was 0.58 (range 0.39–0.71).
+* **Distant metastasis:** the chosen GATs reached 0.66–0.73, but with only 7 external events the intervals are very wide (e.g. 0.40–0.92). The strongest DM model was the **clinical-only** random forest (0.82 in CV, 0.78 in the cohort split), consistent with nodal stage driving distant spread.
+* **Overall survival** gave the most consistent, if modest, signal: 0.62–0.66 for the chosen GATs and the reference alike, with 97% of all OS configurations above 0.5 (median 0.65).
 
 <p align="center">
   <img src="Paper/manuscript/figures/fig5_auc_overview.png" width="85%" alt="External AUC overview">
@@ -359,34 +356,30 @@ The image set available here covers 199 of the 298 eligible Canadian patients. T
 
 ### 7.3 Comparison with a published CNN on the same external patients
 
-Mateus et al. (2023) trained a convolutional neural network on the same collections, with the same two designs, and tested it on the same MAASTRO patients. This makes a direct, fair benchmark.
+Mateus et al. (2023) trained a convolutional neural network on the same collections, with the same two designs and endpoint definitions, and tested it on the same MAASTRO patients. Their predictions are not available, so the comparison is descriptive.
 
 CV rows: mean AUC (range) over the 5 fold models. Cohort-split rows: AUC [95% CI].
 
 | Endpoint | Design | Inputs | This study (GAT) | Mateus et al. CNN |
 |---|---|---|:-:|:-:|
-| LR (2 y) | 5-fold CV | Img | 0.51 (0.41–0.62) | 0.53 (0.48–0.59) |
-| | 5-fold CV | Img+Clin | 0.56 (0.53–0.63) | 0.57 (0.53–0.60) |
-| | Cohort split | Img | **0.63** [0.51, 0.75] | 0.45 [0.32, 0.57] |
-| | Cohort split | Img+Clin | **0.71** [0.62, 0.81] | 0.59 [0.47, 0.70] |
-| DM (2 y) | 5-fold CV | Img | 0.59 (0.38–0.76) | **0.83** (0.76–0.90) |
-| | 5-fold CV | Img+Clin | 0.50 (0.20–0.76) | **0.88** (0.86–0.90) |
-| | Cohort split | Img | 0.36 [0.14, 0.60] | **0.89** [0.79, 0.98] |
-| | Cohort split | Img+Clin | 0.19 [0.10, 0.31] | **0.93** [0.86, 0.99] |
-| OS (4 y) | 5-fold CV | Img | 0.45 (0.42–0.49) | **0.63** (0.57–0.72) |
-| | 5-fold CV | Img+Clin | 0.48 (0.44–0.53) | **0.68** (0.63–0.71) |
-| | Cohort split | Img | 0.45 [0.35, 0.56] | **0.67** [0.57, 0.77] |
-| | Cohort split | Img+Clin | 0.48 [0.37, 0.57] | **0.69** [0.59, 0.79] |
+| LR (2 y) | 5-fold CV | Img | 0.54 (0.46–0.60) | 0.53 (0.48–0.59) |
+| | 5-fold CV | Img+Clin | 0.62 (0.56–0.66) | 0.57 (0.53–0.60) |
+| | Cohort split | Img | 0.55 [0.43, 0.67] | 0.45 [0.32, 0.57] |
+| | Cohort split | Img+Clin | 0.54 [0.41, 0.66] | 0.59 [0.47, 0.70] |
+| DM (2 y) | 5-fold CV | Img | 0.68 (0.64–0.77) | **0.83** (0.76–0.90) |
+| | 5-fold CV | Img+Clin | 0.62 (0.44–0.69) | **0.88** (0.86–0.90) |
+| | Cohort split | Img | 0.73 [0.55, 0.91] | **0.89** [0.79, 0.98] |
+| | Cohort split | Img+Clin | 0.73 [0.57, 0.90] | **0.93** [0.86, 0.99] |
+| OS (4 y) | 5-fold CV | Img | 0.63 (0.62–0.64) | 0.63 (0.57–0.72) |
+| | 5-fold CV | Img+Clin | 0.65 (0.64–0.66) | 0.68 (0.63–0.71) |
+| | Cohort split | Img | 0.62 [0.52, 0.72] | 0.67 [0.57, 0.77] |
+| | Cohort split | Img+Clin | 0.64 [0.53, 0.74] | 0.69 [0.59, 0.79] |
 
 **Interpretation.**
 
-* **LR.** The graph network matched the CNN in cross-validation and **exceeded it in the cohort split** (0.71 vs 0.59). Mateus et al. reported that their CNN lost almost all discrimination for LR on MAASTRO. A representation that explicitly models the peritumoral tissue may capture information on locoregional failure that a single-slice CNN misses.
-* **DM and OS.** The CNN was far better. Most of this gap is explained by the **development data**, not the method:
-  - The CNN was trained on 297 Canadian patients. This study had images for 199.
-  - The images available here contain fewer than half of the DM and OS events: 12 vs 27 DM, 19 vs 44 OS.
-  - All development patients were oropharyngeal, while a third of the test patients had laryngeal cancer.
-
-  This comparison is therefore **indicative, not conclusive**.
+* **LR.** Both models are close to chance on MAASTRO. Since two very different methods fail in the same way on the same patients, the problem is more likely the **transfer of the LR signal between the cohorts** (subsite, chemotherapy, PET/CT vs planning CT, very different event rates) than either model.
+* **OS.** The two approaches perform similarly.
+* **DM.** The CNN is clearly better, and so is a clinical-only random forest. Distant failure is driven by nodal disease and by disease outside the 50 mm peritumoral box that the graph represents.
 
 ### 7.4 Does feature selection or topology matter?
 
@@ -395,23 +388,25 @@ CV rows: mean AUC (range) over the 5 fold models. Cohort-split rows: AUC [95% CI
   <br><em>Mean external AUC for each feature-selection strategy (rows) × topology (columns), averaged over designs and input sets. Blue = above 0.5, red = below.</em>
 </p>
 
-**Topology had almost no effect on LR.** Mean external AUC averaged over selectors, designs and inputs:
+**Feature selection.** The label-driven selectors (mRMR, Boruta, RFE-RF) gave the best LR and DM results; spectral Graph-FS and the unselected feature set the worst. For DM, mRMR, RFE-RF, the published feature set and the CC and hybrid Graph-FS reached 0.61–0.75.
+
+**Topology had almost no effect.** Mean external AUC averaged over selectors, designs and inputs:
 
 | Topology | LR | DM | OS |
 |---|:-:|:-:|:-:|
-| Radiomic star (RadGraph) | 0.59 | 0.52 | 0.55 |
-| Spatial star | 0.61 | 0.49 | 0.52 |
-| Radiomic kNN | 0.61 | 0.52 | **0.58** |
-| Spatial kNN | **0.62** | 0.49 | 0.50 |
+| Radiomic star (reference) | 0.57 | 0.63 | 0.64 |
+| Spatial star | 0.56 | 0.57 | 0.62 |
+| Radiomic kNN | 0.57 | **0.64** | 0.64 |
+| Spatial kNN | 0.55 | 0.60 | 0.64 |
 
-For OS the radiomic topologies did slightly better than the spatial ones, but **no difference survived correction for multiple testing**.
+For DM the radiomic topologies did slightly better than the spatial ones, but **no difference survived correction for multiple testing**.
 
 **Clinical variables helped every endpoint.** Mean external AUC over the grid:
 
 | | LR | DM | OS |
 |---|:-:|:-:|:-:|
-| Imaging only | 0.58 | 0.49 | 0.52 |
-| Imaging + clinical | **0.63** | **0.53** | **0.56** |
+| Imaging only | 0.54 | 0.59 | 0.62 |
+| Imaging + clinical | **0.59** | **0.62** | **0.65** |
 
 ### 7.5 Does the peritumoral graph add anything beyond the tumour?
 
@@ -419,37 +414,32 @@ Each GAT is compared with a random forest trained on **exactly the same GTV feat
 
 | Endpoint | Design | GAT better than RF (feature sets) | Mean AUC, GAT | Mean AUC, RF | Significant (Holm) |
 |---|---|:-:|:-:|:-:|:-:|
-| LR | 5-fold CV | **7/9** | **0.59** | 0.57 | 0 |
-| LR | Cohort split | **6/9** | **0.57** | 0.55 | 0 |
-| DM | 5-fold CV | 1/9 | 0.49 | **0.65** | 1 |
-| DM | Cohort split | 4/9 | 0.49 | 0.50 | 0 |
-| OS | 5-fold CV | 4/8 | 0.53 | 0.54 | 0 |
-| OS | Cohort split | 1/8 | 0.51 | **0.59** | 0 |
+| LR | 5-fold CV | 3/9 | 0.58 | 0.59 | 0 |
+| LR | Cohort split | 3/9 | 0.50 | 0.53 | 1 (RF better) |
+| DM | 5-fold CV | 6/9 | 0.60 | 0.62 | 0 |
+| DM | Cohort split | 3/9 | 0.58 | 0.63 | 0 |
+| OS | 5-fold CV | 2/8 | 0.63 | 0.63 | 0 |
+| OS | Cohort split | 5/8 | 0.62 | 0.63 | 0 |
 
 <p align="center">
   <img src="Paper/manuscript/figures/fig_gat_vs_rf.png" width="85%" alt="GAT vs random forest on the same features">
 </p>
 
-**Interpretation.**
-
-* **LR:** the GAT beat the forest for most feature sets (7 of 9 in CV), although each individual difference was small and not significant. This consistent direction suggests that the **peritumoral tissue holds some information about locoregional failure** beyond the tumour itself, which is biologically plausible because locoregional relapse spreads through that tissue.
-* **DM and OS:** the forest was at least as good as the GAT. Distant spread and death are less tied to the local surroundings.
+**Interpretation.** With the events available here, the peritumoral graph **added no measurable information**: the tumour-only forest was as good as, or slightly better than, the GAT for every endpoint.
 
 ### 7.6 Feature-selection stability: the reproducibility result
 
 **How to read the table:** Kuncheva index; 1 = the same features are picked every time, 0 = no better than random. The best value in each column is in bold.
 
-| Method | CV folds LR | CV folds DM | CV folds OS | Bootstrap LR | Bootstrap DM | Bootstrap OS | Centres LR | Centres DM |
-|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| mRMR | 0.54 | 0.36 | 0.34 | 0.29 | 0.23 | 0.21 | 0.06 | 0.07 |
-| LASSO | 0.11 | 0.34 | 0.29 | 0.16 | 0.13 | 0.19 | 0.03 | 0.11 |
-| Boruta | 0.18 | 0.55 | 0.31 | 0.13 | 0.18 | 0.21 | 0.05 | 0.00 |
-| RFE-RF | 0.27 | 0.29 | 0.27 | 0.13 | 0.17 | 0.22 | 0.05 | 0.04 |
-| Graph-FS (CC) | 0.55 | 0.45 | **0.79** | 0.31 | 0.34 | 0.38 | 0.12 | 0.00 |
-| **Graph-FS (spectral)** | **0.64** | **0.73** | 0.63 | **0.55** | **0.54** | **0.43** | **0.21** | **0.18** |
-| Graph-FS (hybrid) | 0.59 | 0.70 | 0.43 | 0.38 | 0.34 | 0.29 | 0.11 | 0.11 |
-
-Stability across centres could not be estimated for OS because there were fewer than 3 events per centre.
+| Method | CV folds LR | CV folds DM | CV folds OS | Bootstrap LR | Bootstrap DM | Bootstrap OS | Centres LR | Centres DM | Centres OS |
+|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| mRMR | 0.32 | 0.38 | 0.41 | 0.17 | 0.37 | 0.22 | 0.04 | 0.11 | 0.03 |
+| LASSO | 0.29 | 0.16 | 0.22 | 0.16 | 0.17 | 0.14 | 0.04 | 0.10 | 0.05 |
+| Boruta | 0.32 | 0.39 | 0.36 | 0.14 | 0.35 | 0.18 | 0.03 | 0.10 | −0.01 |
+| RFE-RF | 0.31 | 0.39 | 0.43 | 0.12 | 0.33 | 0.14 | 0.02 | 0.07 | 0.03 |
+| Graph-FS (CC) | 0.45 | 0.55 | 0.43 | 0.33 | 0.34 | 0.30 | 0.10 | 0.11 | 0.05 |
+| **Graph-FS (spectral)** | **0.84** | **0.84** | **0.71** | **0.64** | **0.62** | **0.48** | **0.19** | **0.25** | **0.16** |
+| Graph-FS (hybrid) | 0.54 | 0.50 | 0.54 | 0.27 | 0.39 | 0.27 | 0.12 | 0.12 | 0.07 |
 
 <p align="center">
   <img src="Paper/manuscript/figures/fig6_stability.png" width="90%" alt="Feature-selection stability">
@@ -457,17 +447,11 @@ Stability across centres could not be estimated for OS because there were fewer 
 
 **What this shows.**
 
-* **Graph-FS is clearly the most reproducible family.** Spectral Graph-FS was the most stable method for LR and DM in every setting. For example, its CV-fold index was 0.64 for LR, against **0.11 for LASSO**: LASSO picked almost a completely different set of features in each fold.
-* The **supervised selectors** (LASSO, Boruta, RFE-RF) were the least stable.
-* **Selections made in different hospitals agreed poorly for every method** (at most 0.21). Even the best selector partly reflects centre-specific patterns.
+* **Graph-FS is clearly the most reproducible family.** Spectral Graph-FS was the most stable method for every endpoint in every setting (CV-fold index 0.84 for LR, against **0.29 for LASSO**).
+* The **supervised selectors** were the least stable; LASSO picked an almost entirely different feature set in each fold for DM (0.16).
+* **Selections made in different hospitals agreed poorly for every method** (at most 0.25).
 
-**Why Graph-FS is so stable.** Radiomic texture features are highly inter-correlated. At the Graph-FS threshold, almost all of them form **one big community**. A few features with distinctive correlation patterns form their own small communities:
-
-* first-order skewness and median;
-* GLCM informational measure of correlation and cluster shade;
-* GLDM dependence variance.
-
-That community structure barely changes when the training patients change, so Graph-FS keeps picking the same "loner" features. Spectral Graph-FS chose GLCM informational measure of correlation, GLCM cluster shade and GLDM dependence variance in **all five folds**. LASSO, Boruta and RFE-RF instead picked a *different* member of the big correlated community in almost every fold.
+**Why Graph-FS is so stable.** Radiomic texture features are highly inter-correlated. At the Graph-FS threshold, 87 of the 93 features form **one big community**. A few features with distinctive correlation patterns form their own small communities: first-order skewness, median and 90th percentile, GLCM informational measure of correlation and GLDM dependence variance. Spectral Graph-FS chose **exactly these five features in all five folds** for LR. LASSO, Boruta and RFE-RF instead picked a *different* member of the big correlated community in almost every fold.
 
 <p align="center">
   <img src="Paper/manuscript/figures/fig_selection_frequency.png" width="90%" alt="Selection frequency of each feature">
@@ -480,26 +464,26 @@ That community structure barely changes when the training patients change, so Gr
   <img src="Paper/manuscript/figures/fig7_stability_vs_auc.png" width="75%" alt="Stability vs external AUC">
 </p>
 
-Across selectors, stability was **not** associated with external AUC: Spearman ρ = −0.32 for LR and −0.43 for OS. The positive value for DM (ρ = 0.82) rests on only 7 external events and should not be trusted. For LR, the most stable method (spectral Graph-FS) was among the *least* predictive. **mRMR** (Kuncheva 0.54) and the **hybrid Graph-FS** (0.59) combined fairly high stability with the best external LR AUCs.
+Across selectors, stability was **inversely** related to external AUC: Spearman ρ = **−0.92 for LR** and −0.74 for OS (ρ = 0.23 for DM, which rests on only 7 external events). The most stable method, spectral Graph-FS, gave the lowest mean external AUC for OS and, together with the unselected features, for LR and DM. mRMR and RFE-RF (Kuncheva ≈ 0.31 for LR) were among the most predictive. The **hybrid Graph-FS** was intermediate on both axes.
 
-### 7.8 Validation AUC does not predict external AUC
+### 7.8 Validation AUC is a poor guide to external AUC
 
 <p align="center">
   <img src="Paper/manuscript/figures/fig8_val_vs_test.png" width="85%" alt="Validation vs external AUC">
-  <br><em>Each point is one GAT configuration. If validation were a good guide, the points would follow the diagonal. They do not.</em>
+  <br><em>Each point is one GAT configuration. If validation were a good guide, the points would follow the diagonal.</em>
 </p>
 
-Across configurations, the correlation between validation AUC and external AUC ranged from **ρ = −0.40** (OS, CV) to **ρ = 0.20** (LR, cohort split), and was −0.08 for LR in CV. Two observations show how noisy validation was:
+Across configurations, the correlation between validation AUC and external AUC was **ρ = 0.07 (LR), 0.13 (DM) and 0.26 (OS)** in cross-validation and 0.59, 0.42 and 0.30 in the cohort split. Two observations show how noisy validation was:
 
-* The five fold models of the *same* chosen LR configuration had external AUCs ranging from **0.41 to 0.62**.
-* The RadGraph reference scored a validation AUC of only **0.28** in the cohort split, yet reached **0.63** externally in CV.
+* The five fold models of the *same* chosen LR configuration had external AUCs ranging from **0.46 to 0.60**.
+* The reference configuration scored a validation AUC of only **0.35** in the cohort split, yet reached **0.63** externally in CV.
 
-**Why?** With only 2–3 events per validation fold, a single patient changes the validation AUC a lot. When more than 100 configurations are compared on such noisy numbers, the "best" one is largely a **random draw**. Its validation AUC is optimistic and its external performance is unpredictable. This is why the **pre-specified reference sometimes beat the data-driven choice**.
+**Why?** With about 6 events per validation fold, a single patient changes the validation AUC a lot. When more than 100 configurations are compared on such noisy numbers, the "best" one is close to a **random draw** from the upper part of the grid. This is why the **pre-specified reference sometimes beat the data-driven choice**.
 
 ### 7.9 Sensitivity analysis and attention
 
-* **Checkpoint rule.** Replacing "lowest validation loss" with the Mateus AUC-gap rule changed the reference configuration's external AUC by a median of **0.01** (at most 0.13). The chosen configurations changed more, because the rule also changed which configuration ranked first. The overall conclusions were unaffected.
-* **Attention is nearly uniform.** The GTV node's attention to individual supervoxels stayed within about **±2%** of the patient mean. It showed **no dependence on distance** from the tumour and no difference between patients with and without recurrence. For this example patient, the values ranged from 0.047 to 0.048, against a uniform value of 0.048. At this sample size, the attention maps **cannot be interpreted as showing where the risk is**.
+* **Checkpoint rule.** Replacing "lowest validation loss" with the Mateus AUC-gap rule changed the reference configuration's external AUC by a median of **0.01** (at most 0.04). The chosen configurations changed more, because the rule also changed which configuration ranked first. The overall conclusions were unaffected.
+* **Attention is nearly uniform.** For 98% of supervoxels, the GTV node's attention stayed within **±2.9%** of the patient mean. It showed **no dependence on distance** from the tumour and no difference between patients with and without recurrence. For the example patient below, the values ranged from 0.047 to 0.048, against a uniform value of 0.048. At this sample size, the attention maps **cannot be interpreted as showing where the risk is**.
 
 <p align="center">
   <img src="Paper/manuscript/figures/fig_attention_ct.png" width="90%" alt="Attention on CT">
@@ -510,19 +494,21 @@ Across configurations, the correlation between validation AUC and external AUC r
 
 ## 8. Discussion: what the results mean
 
-**1. Graph-FS solves the reproducibility problem, but reproducibility alone is not enough.** Graph-based selection gave far more reproducible node features than LASSO, Boruta and RFE-RF. This confirms the original Graph-FS study in a different setting: perturbing the training patients rather than the radiomic extraction settings. Label-free Graph-FS, however, keeps "distinctive" features because they are structurally isolated, *not* because they are prognostic. Label-driven selectors pick a different but roughly interchangeable correlated feature each time. That is unstable, but not necessarily less predictive.
+**1. Graph-FS solves the reproducibility problem, but reproducibility is not prognostic value.** Graph-based selection gave far more reproducible node features than LASSO, Boruta and RFE-RF, confirming the original Graph-FS study in a different setting (perturbing the training patients rather than the extraction settings). But label-free Graph-FS keeps "distinctive" features because they are structurally isolated, *not* because they are prognostic, and here the most stable selections were among the **least** predictive (ρ = −0.92 for LR). Stability should be reported **alongside** external discrimination, never as a substitute for it.
 
-**2. The hybrid Graph-FS is a sensible default.** By keeping the graph's redundancy control and letting the outcome choose within each community, the hybrid was both stable (Kuncheva 0.59 for LR) and among the best LR selectors externally. It is a reasonable choice when reproducibility and discrimination must be balanced, although the evidence here is not definitive.
+**2. The hybrid Graph-FS is a reasonable compromise.** By keeping the graph's redundancy control and letting the outcome choose within each community, the hybrid was the second most stable selector for LR and OS and was close to the best selectors for DM and OS. The evidence is not definitive.
 
-**3. At this sample size, the GAT acts as a smoothed aggregator.** Topology barely mattered and attention was nearly uniform. The network therefore averaged the peritumoral information rather than learning which regions matter. RadGraph obtained informative attention maps from more than 1,500 training patients; here there were 13 LR events. Even so, beating the tumour-only random forest for most LR feature sets suggests that the surroundings do contain some signal.
+**3. At this sample size, the peritumoral graph adds nothing measurable.** Topology barely mattered, attention was nearly uniform, and a random forest on the tumour features alone did as well as the GAT. Bae et al. (2025) obtained informative attention maps and a benefit of the graph from more than 1,500 training patients; here there were 30 LR and 27 DM events.
 
-**4. Validation-based model selection is unreliable on small cohorts.** This is the most important lesson for practice, and it applies beyond graph networks. When many models are compared on validation folds with 2–3 events, the winner reflects noise. Studies like this should:
+**4. The LR signal does not transfer to MAASTRO, for either method.** The GAT and the published CNN are both near chance for LR on MAASTRO, while both find some signal for OS. The cohorts differ in subsite, treatment, imaging (CT of a PET/CT vs planning CT) and LR event rate; a locoregional risk model learned on one population need not transfer to the other.
+
+**5. Validation-based model selection is unreliable on small cohorts.** This is the most important lesson for practice, and it applies beyond graph networks. When many models are compared on validation folds with a handful of events, the winner largely reflects noise. Studies like this should:
 
 * **fix a reference configuration in advance** and report it next to any data-driven choice;
 * report the **distribution** of external performance across the whole grid, not just the best result;
 * test differences formally, **with correction for multiple comparisons**.
 
-**5. More events are needed before radiomic graph designs can be ranked.** The DM and OS failures, and the gap to the CNN, track the number of available events. That number is far below common sample-size recommendations for prediction models.
+> **Note on an earlier analysis.** A first run (15 Nov 2026) used only the 199 oropharyngeal patients of the HECKTOR image release and preprocessing v3. It suggested an LR advantage over the CNN (0.71 vs 0.59) that **did not replicate** on the complete collection. That analysis is superseded; its models remain available as release `v0.1.0-models` for transparency.
 
 ---
 
@@ -532,7 +518,7 @@ Across configurations, the correlation between validation AUC and external AUC r
 .
 ├── README.md                          ← this file
 ├── LICENSE                            MIT
-├── radgraph-hnscc/                    ← study code (start here)
+├── grafs-gat/                    ← study code (start here)
 │   ├── main.py                        CLI for every pipeline stage
 │   ├── run_mateus_study.sh            the full study: LR, DM, OS × both designs × both checkpoint rules
 │   ├── export_results.py              study-level CSVs, ROC figures, final model copies
@@ -540,17 +526,17 @@ Across configurations, the correlation between validation AUC and external AUC r
 │   ├── verify_release.py              reproduces the published external AUCs from the released models
 │   ├── check_setup.py                 environment + data check (patient/event counts vs the paper)
 │   ├── smoke_test.py                  every stage on synthetic data (installation test)
-│   ├── tools/organize_data.py         arranges the TCIA / HECKTOR downloads
+│   ├── tools/organize_data.py         arranges the TCIA downloads
 │   ├── Makefile                       make smoke | check | verify | study | export | paper | docker
 │   ├── environment.yml, requirements.txt, requirements-lock.txt, Dockerfile
 │   ├── DATA.md, REPRODUCIBILITY.md    data instructions; reproduction levels and verification log
 │   ├── README.md                      detailed pipeline documentation
-│   └── radgraph/
+│   └── grafsgat/
 │       ├── config.py                  cohorts, designs, FS × topology grid, GAT hyper-parameters
 │       ├── data/                      clinical labels, CT/GTV loading, preprocessing, SLIC, PyRadiomics, splits
 │       ├── selection/                 9 selectors incl. Graph-FS; stability metrics
 │       ├── graphs/                    4 topologies; PyG datasets; class-balanced sampler
-│       ├── models/gat.py              RadGraph GAT
+│       ├── models/gat.py              GRAFS-GAT network
 │       ├── engine/                    training, evaluation (+ attention), RF baselines
 │       ├── experiments/               benchmark grid, cross-fold summary, export
 │       ├── inference.py               checkpoint loading and ensemble prediction
@@ -583,7 +569,7 @@ Tested on Ubuntu (Linux 5.15) with Python 3.8, CUDA 11.7 and an NVIDIA GPU. Ever
 
 ```bash
 git clone https://github.com/hash123shaikh/Radiomics_Graph_Attention_Network_HNC.git
-cd Radiomics_Graph_Attention_Network_HNC/radgraph-hnscc
+cd Radiomics_Graph_Attention_Network_HNC/grafs-gat
 
 # (a) conda, with the exact package versions of the published results
 conda env create -f environment.yml && conda activate GNNvenv
@@ -592,7 +578,7 @@ conda env create -f environment.yml && conda activate GNNvenv
 pip install numpy==1.24.3 "setuptools>=65" && pip install -r requirements-lock.txt
 
 # (c) Docker, with no local Python needed
-docker build -t radgraph-fs .
+docker build -t grafs-gat .
 ```
 
 Then test the installation **without any patient data**:
@@ -607,44 +593,41 @@ The main pinned versions are `torch 2.0.1`, `torch-geometric 2.3.1`, `pyradiomic
 
 ## 11. Data
 
-Both cohorts are public. **No patient data are included in this repository.** Step-by-step instructions are in **[radgraph-hnscc/DATA.md](radgraph-hnscc/DATA.md)**.
+Both cohorts are public. **No patient data are included in this repository.** Step-by-step instructions are in **[grafs-gat/DATA.md](grafs-gat/DATA.md)**.
 
 | Cohort | Role | Source |
 |---|---|---|
-| Head-Neck-PET-CT (CHUM, CHUS, HGJ, HMR) | training / validation | CT + primary-GTV NIfTI from the [HECKTOR challenge](https://hecktor.grand-challenge.org/); outcomes (`INFOclinical_HN_Version2_30may2018.xlsx`) from [TCIA Head-Neck-PET-CT](https://doi.org/10.7937/K9/TCIA.2017.8oje5q00) |
+| Head-Neck-PET-CT (CHUM, CHUS, HGJ, HMR) | training / validation | [TCIA Head-Neck-PET-CT](https://doi.org/10.7937/K9/TCIA.2017.8oje5q00): full DICOM collection (CT of the PET/CT + RTSTRUCT are used), `INFOclinical_HN_Version2_30may2018.xlsx` and `INFO_GTVcontours_HN.xlsx` |
 | MAASTRO HN1 | external test only | [TCIA HN1](https://doi.org/10.7937/tcia.2019.8kap372n): DICOM CT + RTSTRUCT and the clinical table |
 
 ```bash
 # arrange the downloads (symlinks; the downloaded folders are not modified)
-python tools/organize_data.py hecktor --src <HECKTOR download> --clinical <INFOclinical .xlsx> --out data/HNPET
-python tools/organize_data.py hn1     --src <NBIA download>    --clinical <HN1 clinical .csv>  --out data/MAASTRO
+python tools/organize_data.py hnpet --src <NBIA download> --clinical <INFOclinical .xlsx> \
+       --gtv-list <INFO_GTVcontours_HN.xlsx> --out data/Head-Neck-PET-CT
+python tools/organize_data.py hn1   --src <NBIA download> --clinical <HN1 clinical .csv> --out data/MAASTRO
 
 # check the data: compares your patient and event counts with Table 1 of the paper
 make check
 ```
 
-The data can live anywhere: set `RADGRAPH_DATA_DIR` (and `RADGRAPH_OUTPUT_DIR` for results). **No code needs to be edited.**
+The data can live anywhere: set `GRAFS_DATA_DIR` (and `GRAFS_OUTPUT_DIR` for results). **No code needs to be edited.**
 
 ---
 
 ## 12. Reproducing the study
 
-There are four levels of reproduction, from minutes to days. Details and the verification log are in **[radgraph-hnscc/REPRODUCIBILITY.md](radgraph-hnscc/REPRODUCIBILITY.md)**.
+There are four levels of reproduction, from minutes to days. Details and the verification log are in **[grafs-gat/REPRODUCIBILITY.md](grafs-gat/REPRODUCIBILITY.md)**.
 
-| Level | What it reproduces | Needs | Command (in `radgraph-hnscc/`) |
+| Level | What it reproduces | Needs | Command (in `grafs-gat/`) |
 |---|---|---|---|
 | 0 | the installation works | nothing | `make smoke` |
-| 1 | **the published external AUCs**, from the released models | MAASTRO data only | `make verify` |
+| 1 | the external AUCs of the earlier model release `v0.1.0-models` (v3) | MAASTRO data only | `make verify` |
 | 2 | the full study, retrained from the raw images | both cohorts, GPU (several GPU-days) | `make study` |
 | 3 | every figure, table and number of the manuscript | results of level 2 | `make export && make paper` |
 
-**Verified on 15 Nov 2026:**
-* All **24/24** released model ensembles reproduce their reported external AUC to 4 decimals.
-* The same 24/24 result holds inside the Docker image on CPU.
-* The preprocessing re-run from the raw images is identical to the archived study cache.
-* All **218 numbers** and every table of the manuscript regenerate byte-identically from the study results.
+**Current results (18 Nov 2026):** the full study was run on the complete Head-Neck-PET-CT collection with preprocessing v4; all **218 numbers**, tables and figures of the manuscript are regenerated from its results by `make paper`.
 
-**Preprocessing profile.** The manuscript and the released models use **preprocessing v3**, which `make study` uses by default. The code also has an improved **v4** profile (body mask + soft-tissue window). Select the profile with `--preprocess v3|v4` or `RADGRAPH_PREPROCESS`. Caches record their profile, so files of different profiles are never mixed.
+**Preprocessing profile.** The study uses **preprocessing v4** (body mask + soft-tissue window), the default everywhere. The older **v3** profile is kept only to run the models of release `v0.1.0-models` (first analysis on 199 patients); `make verify` checks those models (24/24 ensembles reproduced their AUCs on 15 Nov 2026). Select the profile with `--preprocess v3|v4` or `GRAFS_PREPROCESS`. Caches record their profile, so files of different profiles are never mixed.
 
 The pipeline runs as a series of stages. Each stage stores its output, so an interrupted run resumes where it stopped:
 
@@ -660,7 +643,7 @@ The pipeline runs as a series of stages. Each stage stores its output, so an int
 Use `--force` to recompute a stage. Examples:
 
 ```bash
-python main.py --mode MATEUS_CV     --task DM --from_stage select --preprocess v3            # 5 folds + cross-fold summary
+python main.py --mode MATEUS_CV     --task DM --from_stage select                            # 5 folds + cross-fold summary
 python main.py --mode MATEUS_CV     --task OS --from_stage select --fold 3                   # a single fold
 python main.py --mode MATEUS_COHORT --task LR --from_stage select --epoch_rule auc_gap       # Mateus checkpoint rule
 python main.py --mode MATEUS_CV     --task LR --stage benchmark \
@@ -697,9 +680,9 @@ python predict.py --task LR --ct new/CT.nii.gz --mask new/GTV.nii.gz --id NEW001
 
 For each patient the output gives the ensemble probability, the spread across ensemble members, high or low risk at the validation Youden threshold, and the label when it is known.
 
-> **Trained models** are not tracked in git. They are attached to the [GitHub release `v0.1.0-models`](https://github.com/hash123shaikh/Radiomics_Graph_Attention_Network_HNC/releases/tag/v0.1.0-models). `make verify` downloads them and checks them against the reported AUCs. To use them yourself, unzip `radgraph-hnscc_final_models_v3.zip` and pass a model folder with `--models .../final_models/<DESIGN>_<TASK>/<inputs>` and `--preprocess v3`. The models were trained with preprocessing v3.
+> **Trained models** are not tracked in git. The models of the current study (complete cohort, preprocessing v4) are in `grafs-gat/outputs/final_models/` after a run and will be attached to a new GitHub release. The earlier release [`v0.1.0-models`](https://github.com/hash123shaikh/Radiomics_Graph_Attention_Network_HNC/releases/tag/v0.1.0-models) holds the models of the superseded 199-patient analysis (preprocessing v3); `make verify` downloads and checks them. To use them, unzip `radgraph-hnscc_final_models_v3.zip` and pass `--models .../final_models/<DESIGN>_<TASK>/<inputs> --preprocess v3`.
 
-| Result file (`radgraph-hnscc/outputs/results/`) | Content |
+| Result file (`grafs-gat/outputs/results/`) | Content |
 |---|---|
 | `main_results.csv` | for each endpoint × design × checkpoint rule × inputs: chosen GAT, reference GAT, best RF and clinical-only RF, with validation AUC, external AUC [95% CI], fold range and Holm-corrected DeLong *p* |
 | `all_configurations.csv` | every configuration of every run |
@@ -713,12 +696,12 @@ For each patient the output gives the ensemble probability, the spread across en
 
 ## 15. Limitations
 
-* **Few events.** The development image set covered 199 of the 298 Canadian patients, was all oropharyngeal, and contained fewer than half of the events. The full collection is needed for a fair comparison with Mateus et al.
+* **Few events.** Even the complete Canadian collection contains only 30 LR, 27 DM and 44 OS events, far below common sample-size recommendations for prediction models.
 * **DM external set.** With 7 external DM events, DM results cannot be interpreted beyond their confidence intervals.
-* **Cohort shift.** The test cohort includes laryngeal cancers, more HPV-negative patients and less chemotherapy.
+* **Cohort shift.** The test cohort has more laryngeal cancers, more HPV-negative patients, less chemotherapy and a much higher LR event rate. Development CTs are the CT of a PET/CT; MAASTRO CTs are planning CTs.
 * **One extraction setting.** Stability was measured across data resamples and centres, not across radiomic extraction settings as in the original Graph-FS study.
-* **Supervoxel stage.** The reported results use preprocessing v3. In v3 the 50 mm box extends beyond the skin, so a median of 22% of supervoxels were mostly air. The code now defaults to preprocessing v4, which adds a body mask and a soft-tissue window to make the peritumoral nodes more anatomically meaningful. The study has not yet been re-run with v4.
-* **Hyper-parameters** were taken from RadGraph, not tuned, and OS reused the LR settings.
+* **Supervoxel scale.** With 100 supervoxels in a 50 mm box, each supervoxel is about 20 cm³, twice the median GTV; finer supervoxels have not been tested.
+* **Hyper-parameters** were taken from Bae et al. (2025), not tuned, and OS reused the LR settings.
 * **Binary horizons** discard censored patients. A survival formulation could use the data more efficiently.
 * **Fixed k = 6** for every selector, chosen for comparability. `--k native` lets each selector use its own size.
 
@@ -745,7 +728,7 @@ The manuscript is in preparation. Until it is published, please cite this reposi
 
 This work builds on:
 
-* **RadGraph:** Bae et al. Spatial radiomic graph with graph attention network for outcome prediction in head and neck cancer. *Radiology: Imaging Cancer*, 2025.
+* **Spatial radiomic graphs:** Bae et al. Spatial radiomic graph with graph attention network for outcome prediction in head and neck cancer. *Radiology: Imaging Cancer*, 2025.
 * **Graph-FS:** Moradmand et al. Graph-based feature selection for reproducible radiomics. *Scientific Reports* 15, 27995 (2025).
 * **Validation design and CNN benchmark:** Mateus et al. *Scientific Reports* 13, 18176 (2023).
 * **Cohort split:** Diamant et al. Deep learning in head & neck cancer outcome prediction. *Scientific Reports* 9, 2764 (2019).
@@ -753,7 +736,7 @@ This work builds on:
 * **Methods:** Veličković et al., Graph Attention Networks (ICLR 2018); Achanta et al., SLIC superpixels (2012); van Griethuysen et al., PyRadiomics (2017); Kuncheva, stability index (2007); DeLong et al. (1988); Holm (1979).
 * **Software:** PyTorch, PyTorch Geometric, PyRadiomics, scikit-learn, SimpleITK.
 
-The original RadGraph authors' code is not redistributed here. Please obtain it from its authors.
+The original authors' code (Bae et al. 2025) is not redistributed here. Please obtain it from its authors.
 
 ---
 

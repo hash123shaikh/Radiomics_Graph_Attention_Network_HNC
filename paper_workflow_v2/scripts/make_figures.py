@@ -44,19 +44,19 @@ def pipeline_overview():
             p.unlink()
 
 
-ARCHIVE_V3 = IDEA / 'radgraph-hnscc' / 'outputs_archive_v3' / 'cache' / 'preprocessed'
+ARCHIVE_V3 = IDEA / 'grafs-gat' / 'outputs_archive_v3' / 'cache' / 'preprocessed'
 
 
 def _load(pid, archive=False):
-    from radgraph.data.features import preprocessed_path
-    f = (ARCHIVE_V3 / f'{pid}.npz') if archive else preprocessed_path(pid)
+    from grafsgat.data.features import preprocessed_path
+    f = (ARCHIVE_V3 / f'{pid}_preprocessed.npz') if archive else preprocessed_path(pid)
     with np.load(f, allow_pickle=False) as d:
         return d['ct_array'], d['gtv_array'], d['supervoxel_labels']
 
 
 def slic_steps():
     """Stage 2 before and after the v4 refinements on one patient."""
-    from radgraph.data.supervoxels import body_mask
+    from grafsgat.data.supervoxels import body_mask
     ct, gtv, sv_old = _load(PID, archive=True)
     _, _, sv_new = _load(PID)
     z = int(np.argmax(gtv.reshape(gtv.shape[0], -1).sum(1)))
@@ -87,7 +87,7 @@ def slic_steps():
 def _stage2_stats(files, ct_files=None):
     """Per-patient supervoxel statistics over a set of preprocessed files."""
     n, vol, air, box, body = [], [], [], [], []
-    from radgraph.data.supervoxels import body_mask
+    from grafsgat.data.supervoxels import body_mask
     for f in files:
         with np.load(f, allow_pickle=False) as d:
             ct, sv = d['ct_array'], d['supervoxel_labels'].astype(np.int64)
@@ -105,7 +105,7 @@ def stats_and_histogram():
     """stats.json (numbers quoted in the documents) and the supervoxel-volume histogram (v3 vs v4)."""
     import glob, json
     import pandas as pd
-    from radgraph import config
+    from grafsgat import config
     S = {}
     v3 = _stage2_stats(sorted(glob.glob(str(ARCHIVE_V3 / '*.npz'))))
     v4 = _stage2_stats(sorted(glob.glob(str(config.PREPROCESSED_DIR / '*.npz'))))
@@ -146,5 +146,10 @@ def stats_and_histogram():
 if __name__ == '__main__':
     copy_manuscript_figures()
     pipeline_overview()
-    slic_steps()
-    print(stats_and_histogram())
+    if ARCHIVE_V3.exists():
+        slic_steps()
+        print(stats_and_histogram())
+    else:
+        # the version-3 cache was deleted after the v4 study (18 Nov 2026); slic_steps.png,
+        # supervoxel_sizes.png and stats.json in ../figures were generated before that and are kept
+        print('outputs_archive_v3 not present: keeping the existing v3-vs-v4 figures and stats.json')

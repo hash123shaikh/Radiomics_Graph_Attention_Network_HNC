@@ -4,7 +4,7 @@ regenerated after a re-run (e.g. once the full Head-Neck-PET-CT image set is ava
 
     python make_paper_assets.py          (project environment, e.g. conda activate GNNvenv)
 
-Reads   $RADGRAPH_OUTPUT_DIR/results/*.csv (default radgraph-hnscc/outputs/; written by export_results.py)
+Reads   $GRAFS_OUTPUT_DIR/results/*.csv (default grafs-gat/outputs/; written by export_results.py)
         and the clinical files
 Writes  ../figures/*.pdf|png  and  ../tables/*.tex  (\\input by main.tex and supplementary.tex)
         ../tables/numbers.tex (\\newcommand macros for every number quoted in the text)
@@ -23,9 +23,9 @@ from matplotlib.patches import FancyBboxPatch
 
 HERE = Path(__file__).resolve().parent
 MS = HERE.parent
-PROJ = MS.parent.parent / 'radgraph-hnscc'
+PROJ = MS.parent.parent / 'grafs-gat'
 import os
-OUT = Path(os.environ['RADGRAPH_OUTPUT_DIR']).expanduser() if os.environ.get('RADGRAPH_OUTPUT_DIR') else PROJ / 'outputs'
+OUT = Path(os.environ['GRAFS_OUTPUT_DIR']).expanduser() if os.environ.get('GRAFS_OUTPUT_DIR') else PROJ / 'outputs'
 RES = OUT / 'results'
 RUNS = OUT / 'runs'
 FIG = MS / 'figures'
@@ -53,7 +53,7 @@ TASK_LONG = {'LR': 'Locoregional recurrence (2 y)', 'DM': 'Distant metastasis (2
 DESIGN = {'MATEUS_CV': '5-fold CV', 'MATEUS_COHORT': 'Cohort split'}
 METHODS = ['table_s3', 'all', 'mrmr', 'lasso', 'boruta', 'rfe_rf',
            'graph_fs_cc', 'graph_fs_spectral', 'graph_fs_hybrid']
-MNAME = {'table_s3': 'Table S3 (RadGraph)', 'all': 'All features', 'mrmr': 'mRMR', 'lasso': 'LASSO',
+MNAME = {'table_s3': 'Published feature set', 'all': 'All features', 'mrmr': 'mRMR', 'lasso': 'LASSO',
          'boruta': 'Boruta', 'rfe_rf': 'RFE-RF', 'graph_fs_cc': 'Graph-FS (CC)',
          'graph_fs_spectral': 'Graph-FS (spectral)', 'graph_fs_hybrid': 'Graph-FS (hybrid)',
          'clinical_only': 'Clinical only'}
@@ -127,11 +127,11 @@ def fig_design():
 
     # row 2: grid
     box(0.5, 13, 30, 21.5, 'Feature selection (9)',
-        'Table S3 (RadGraph reference)\nAll features (no selection)\nmRMR, LASSO, Boruta, RFE-RF\nGraph-FS: CC, spectral, hybrid\n\nfitted on training patients only\n(k = 6 features)', CAT[1])
+        'Published feature set (reference)\nAll features (no selection)\nmRMR, LASSO, Boruta, RFE-RF\nGraph-FS: CC, spectral, hybrid\n\nfitted on training patients only\n(k = 6 features)', CAT[1])
     box(34.5, 13, 30, 21.5, 'Graph topology (4)',
-        'GTV hub + 20 supervoxels\nRadiomic star (RadGraph)\nSpatial star\nRadiomic kNN (star + kNN, k = 4)\nSpatial kNN\n\nnodes z-scored on training GTVs', CAT[1])
+        'GTV hub + 20 supervoxels\nRadiomic star (reference)\nSpatial star\nRadiomic kNN (star + kNN, k = 4)\nSpatial kNN\n\nnodes z-scored on training GTVs', CAT[1])
     box(68.5, 13, 31, 21.5, 'Models',
-        'RadGraph GAT (Table S2 settings)\nGTV read-out, imaging only or\nimaging + clinical, 3 seeds\n\nControls: RF on same features,\nclinical-only RF', CAT[1])
+        'GRAFS-GAT (published GAT settings)\nGTV read-out, imaging only or\nimaging + clinical, 3 seeds\n\nControls: RF on same features,\nclinical-only RF', CAT[1])
     arrow(31.3, 23.5, 33.7, 23.5); arrow(65.3, 23.5, 67.7, 23.5)
     arrow(50, 37.2, 50, 35.3)
 
@@ -140,7 +140,7 @@ def fig_design():
         '5-fold stratified CV on the 4 Canadian centres\nor cohort split HGJ+CHUS / HMR+CHUM\n'
         'configuration chosen on validation AUC; MAASTRO used once', CAT[2])
     box(52.5, -4, 47, 14, 'Evaluation',
-        'external AUC + 95% bootstrap CI\nDeLong test (Holm) vs RadGraph reference\n'
+        'external AUC + 95% bootstrap CI\nDeLong test (Holm) vs reference configuration\n'
         'selection stability: Kuncheva, Jaccard, Kendall W', CAT[2])
     arrow(50, 12.2, 50, 10.8)
     save(fig, 'fig1_study_design')
@@ -249,7 +249,7 @@ def fig_overview():
     for role in roles:
         axs[0].plot([], [], 'o-', color=colours[role], ms=4, lw=1.3,
                     label={'chosen GAT': 'GAT, configuration chosen on validation',
-                           'reference GAT': 'GAT, RadGraph reference',
+                           'reference GAT': 'GAT, pre-specified reference',
                            'best RF': 'RF on selected GTV features',
                            'clinical-only RF': 'Clinical-only RF'}[role])
     fig.legend(*axs[0].get_legend_handles_labels(), loc='lower center', ncol=4, fontsize=6.8,
@@ -352,9 +352,9 @@ def fig_val_vs_test():
 # ═════════════════════════════════════════════════════════════════════════════
 def table_cohort():
     """Patient characteristics of the analysed patients (LR-eligible with images) + outcome counts."""
-    from radgraph import config
-    from radgraph.data.clinical import load_clinical, compute_labels, encode_clinical
-    from radgraph.data.loader import HNSCCDataLoader
+    from grafsgat import config
+    from grafsgat.data.clinical import load_clinical, compute_labels, encode_clinical
+    from grafsgat.data.loader import HNSCCDataLoader
     config.set_mode('MATEUS_CV')
     rows = {}
     for ds in ('HNPET', 'MAASTRO'):
@@ -365,7 +365,7 @@ def table_cohort():
         e = enc.loc[[p for p in ids if p in enc.index]]
         age = e['age']
         col = {}
-        col['Patients with CT and GTV'] = f'{len(ids)}'
+        col['Patients analysed'] = f'{len(ids)}'
         col['Age, median (IQR), y'] = f'{age.median():.0f} ({age.quantile(.25):.0f}--{age.quantile(.75):.0f})'
         col['Male sex'] = f'{int(e.sex_male.sum())} ({100 * e.sex_male.mean():.0f}\\%)'
         for k, lab in (('hpv_positive', 'HPV positive'), ('hpv_negative', 'HPV negative'),
@@ -578,9 +578,9 @@ def table_epoch_rule():
 
 def table_missing_images():
     """Supplementary: events lost because Head-Neck-PET-CT images were unavailable."""
-    from radgraph import config
-    from radgraph.data.clinical import load_clinical, compute_labels
-    from radgraph.data.loader import HNSCCDataLoader
+    from grafsgat import config
+    from grafsgat.data.clinical import load_clinical, compute_labels
+    from grafsgat.data.loader import HNSCCDataLoader
     df = load_clinical('HNPET')
     img = set(HNSCCDataLoader('HNPET').eligible_patients_any_task())
     lines = [r'\begin{tabular}{@{}lcccc@{}}', r'\toprule',
@@ -811,8 +811,8 @@ def extra_numbers():
 # ═════════════════════════════════════════════════════════════════════════════
 def fig_roc_all():
     from sklearn.metrics import roc_curve
-    from radgraph import config
-    from radgraph.experiments import export as ex
+    from grafsgat import config
+    from grafsgat.experiments import export as ex
     cols = [('MATEUS_CV', False), ('MATEUS_CV', True), ('MATEUS_COHORT', False), ('MATEUS_COHORT', True)]
     short = {'chosen GAT': 'GAT, chosen', 'reference GAT': 'GAT, reference', 'best RF': 'RF, GTV features',
              'clinical-only RF': 'RF, clinical'}
@@ -861,9 +861,9 @@ def fig_graphfs_workflow():
     import networkx as nx
     from matplotlib.patches import FancyArrowPatch
     from matplotlib.lines import Line2D
-    from radgraph import config
-    from radgraph.selection.runner import train_matrix
-    from radgraph.selection import methods as M
+    from grafsgat import config
+    from grafsgat.selection.runner import train_matrix
+    from grafsgat.selection import methods as M
     config.set_mode('MATEUS_CV'); config.set_task('LR'); config.set_fold(1)
     X, y, _, _ = train_matrix('LR')
     Z = M.prepare(X)
@@ -1049,8 +1049,8 @@ TOPO_PATIENT = 'HN1260'     # external (MAASTRO) patient used to illustrate the 
 def fig_topologies_ct(pid=None, out='fig2_topologies'):
     """The four graph topologies drawn on the real CT of one external patient (graphs used in fold 1)."""
     import torch
-    from radgraph import config
-    from radgraph.data.features import preprocessed_path
+    from grafsgat import config
+    from grafsgat.data.features import preprocessed_path
     pid = pid or TOPO_PATIENT
     config.set_mode('MATEUS_CV'); config.set_task('LR'); config.set_fold(1)
     graphs = {t: torch.load(config.graph_dir('LR', 'table_s3', t) / f'{pid}.pt', weights_only=False)
@@ -1107,8 +1107,8 @@ def fig_attention_ct(pid=None):
     import torch
     from matplotlib.colors import Normalize, LinearSegmentedColormap
     from matplotlib.cm import ScalarMappable
-    from radgraph import config
-    from radgraph.data.features import preprocessed_path
+    from grafsgat import config
+    from grafsgat.data.features import preprocessed_path
     pid = pid or ATT_PATIENT
     seq = LinearSegmentedColormap.from_list('seq', ['#cde2fb', '#6da7ec', '#256abf', '#0d366b'])
     config.set_mode('MATEUS_CV'); config.set_task('LR'); config.set_fold(1)

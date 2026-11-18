@@ -15,11 +15,11 @@ blocks = [
           'de-escalation or follow-up.'),
     ('p', 'Radiomics extracts quantitative descriptors of intensity and texture from routine CT. Conventional radiomic models '
           'summarise the gross tumour volume (GTV) with one feature vector, discarding both the internal heterogeneity of the '
-          'tumour and the surrounding tissue through which microscopic extension and nodal spread occur. RadGraph (Bae et al., '
+          'tumour and the surrounding tissue through which microscopic extension and nodal spread occur. A spatial radiomic graph approach (Bae et al., '
           '2025) addressed this by representing each patient as a graph: the GTV is the central node, surrounding '
           'supervoxels are peripheral nodes, all described by radiomic features, and a graph attention network (GAT) reads '
           'the outcome from the GTV node after exchanging information with the surrounding tissue.'),
-    ('p', 'Two choices in RadGraph were fixed rather than studied: a small endpoint-specific set of node features and a '
+    ('p', 'Two choices in that approach were fixed rather than studied: a small endpoint-specific set of node features and a '
           '"radiomic star" graph that connects the GTV to the supervoxels most similar to it. Both choices matter for '
           'reproducibility. Radiomic features are highly inter-correlated, so conventional feature selection changes with '
           'small perturbations of the training data. Graph-based feature selection (Graph-FS; Moradmand et al., 2025) '
@@ -33,7 +33,7 @@ blocks = [
           'when used in a spatial radiomic GAT, and whether the graph topology matters. Four research questions follow:'),
     ('numbered', [
         '**Discrimination.** Does any combination of feature selection and graph topology improve external discrimination '
-        'over the published RadGraph configuration for locoregional recurrence (LR), distant metastasis (DM) and overall '
+        'over the pre-specified reference configuration for locoregional recurrence (LR), distant metastasis (DM) and overall '
         'survival (OS)?',
         '**Reproducibility.** How stable are the selected features across cross-validation folds, bootstrap resamples and '
         'centres, and is Graph-FS more stable than conventional selectors?',
@@ -45,15 +45,18 @@ blocks = [
     ('h1', H[2]),
     ('table', ['Cohort', 'Role', 'Centres', 'Patients', 'Imaging used'], [
         ['Head-Neck-PET-CT (TCIA)', 'development (training and validation)', 'CHUM, CHUS, HGJ, HMR (Québec, Canada)',
-         '298 in the clinical file; 199 with CT and primary GTV (CHUM 56, CHUS 72, HGJ 53, HMR 18)', 'CT and primary GTV (HECKTOR release)'],
+         '298 (294 eligible for at least one endpoint: CHUM 65, CHUS 100, HGJ 89, HMR 40)', 'CT of the PET/CT and RTSTRUCT (full TCIA release)'],
         ['HN1 (TCIA)', 'external test only', 'MAASTRO Clinic, Maastricht', '137', 'planning CT and RTSTRUCT'],
     ], [3.4, 3.3, 3.6, 4.2, 2.5], 'Data sources.'),
-    ('p', 'Both collections are distributed by The Cancer Imaging Archive. The Canadian images available locally are those '
-          'of the HECKTOR challenge release, which contains only oropharyngeal tumours; 199 of the 298 patients therefore have '
-          'images, and the patients without images carry more than half of the outcome events (Section 4). The complete '
-          'collection, including laryngeal, nasopharyngeal and hypopharyngeal cases, is being obtained from TCIA. Clinical '
-          'variables recorded identically in both cohorts were used: age, sex, HPV status, T and N category, subsite and '
-          'concurrent chemotherapy.'),
+    ('p', 'Both collections are distributed by The Cancer Imaging Archive. The complete Head-Neck-PET-CT collection is used: '
+          'for every patient, the CT component of the pretreatment PET/CT and the radiotherapy structure set registered to it. '
+          'The primary GTV is identified per patient from the structure names (data/Head-Neck-PET-CT/gtv_primary_rois.csv; the '
+          'union is taken when the tumour is split into several structures), and contours are rasterised from their physical '
+          'coordinates, because 91 structure sets reference PET rather than CT slices. The development cohort is now '
+          'subsite-mixed (68% oropharynx, 15% larynx, 17% other), whereas MAASTRO is 64% oropharynx and 36% larynx. An earlier '
+          'analysis used the HECKTOR release of 199 oropharyngeal patients, which lacked more than half of the outcome events; '
+          'it is superseded. Clinical variables recorded identically in both cohorts were used: age, sex, HPV status, T and N '
+          'category, subsite and concurrent chemotherapy.'),
 
     ('h1', H[3]),
     ('p', 'Endpoints follow Mateus et al.: LR and DM within 2 years of diagnosis and death from any cause within 4 years (OS; '
@@ -62,14 +65,14 @@ blocks = [
           'events after the horizon count as negative, and patients censored before the horizon without an event are '
           'excluded. The rule avoids the two errors of the earlier implementation: excluding early events because their '
           'event time is shorter than the horizon, and counting late events as positives.'),
-    ('table', ['Endpoint', 'Canadian, all eligible (events)', 'Canadian with images (events)', 'MAASTRO (events)'], [
-        ['LR, 2 years', '276 (30)', '190 (13)', '121 (30)'],
-        ['DM, 2 years', '276 (27)', '191 (12)', '109 (7)'],
-        ['OS, 4 years', '164 (44)', '92 (19)', '135 (45)'],
-    ], [3.4, 4.6, 4.6, 4.4], 'Patients and events per endpoint.'),
+    ('table', ['Endpoint', 'Canadian development cohort (events)', 'MAASTRO (events)'], [
+        ['LR, 2 years', '276 (30, 10.9%)', '121 (30, 24.8%)'],
+        ['DM, 2 years', '276 (27, 9.8%)', '109 (7, 6.4%)'],
+        ['OS, 4 years', '164 (44, 26.8%)', '135 (45, 33.3%)'],
+    ], [4.4, 6.3, 6.3], 'Patients and events per endpoint (identical to Table 1 of Mateus et al.).'),
     ('note', 'warn', 'Event scarcity',
-     'With 12–19 events in the development data, each cross-validation validation fold contains only two or three LR or DM '
-     'events, and the external DM cohort contains seven. Confidence intervals are therefore wide, and validation-based model '
+     'With 27–44 events in the development data, each cross-validation validation fold contains about six LR or DM events, '
+     'and the external DM cohort contains seven. Confidence intervals are therefore wide, and validation-based model '
      'selection is unreliable (Section 14).'),
 
     ('h1', H[4]),
@@ -86,9 +89,12 @@ blocks = [
     ('h1', H[5]),
     ('p', 'CT and GTV are resampled to 1 mm isotropic voxels (linear interpolation for CT, nearest neighbour for the mask). The '
           'peritumoral region is the GTV bounding box enlarged by 50 mm, to which both arrays are cropped. The region minus the '
-          'GTV is divided into 100 supervoxels with zero-parameter SLIC; the GTV itself is a separate node. Stage 2 is '
-          'documented in detail, including two recommended improvements (body mask and soft-tissue window), in the companion '
-          'document *Stage 2: Peritumoral Supervoxel Generation*.'),
+          'GTV is restricted to the patient body (CT > −500 HU, largest connected component, holes filled per slice), the CT is '
+          'clipped to a soft-tissue window (−160 to 240 HU) and scaled to [0, 1], and the region is divided into 100 '
+          'supervoxels with zero-parameter SLIC; the GTV itself is a separate node. This is preprocessing version 4; version 3, '
+          'used in the earlier analysis, ran SLIC on the whole box with min–max scaling, so that about one fifth of the '
+          'supervoxels were mostly air. Stage 2 is documented in detail in the companion document *Stage 2: Peritumoral '
+          'Supervoxel Generation*.'),
 
     ('h1', H[6]),
     ('p', 'PyRadiomics extracts 93 features for the GTV and every supervoxel with a fixed bin width of 25 HU and no intensity '
@@ -101,7 +107,7 @@ blocks = [
           'applying a signed logarithm to heavy-tailed features and z-scoring. Every data-driven selector keeps k = 6 '
           'features, so that strategies are compared at equal model capacity.'),
     ('table', ['Strategy', 'Principle', 'Uses the outcome'], [
-        ['Table S3 (RadGraph)', 'fixed published features (4 for LR, 6 for DM); reference', 'no (fixed)'],
+        ['Published feature set', 'fixed published features (4 for LR, 6 for DM); reference', 'no (fixed)'],
         ['All features', 'no selection (93 node features); control', 'no'],
         ['mRMR', 'maximum relevance (ANOVA F) / minimum redundancy (mean |r|)', 'yes'],
         ['LASSO', 'L1 logistic regression; ranking by entry on the regularisation path', 'yes'],
@@ -132,7 +138,7 @@ blocks = [
      'read-out node; blue: selected supervoxels; yellow: kNN edges.'),
 
     ('h1', H[9]),
-    ('p', 'The network reproduces the RadGraph architecture (authors\' GAT_modeling.py) and its endpoint-specific '
+    ('p', 'The network follows the published architecture (authors\' GAT_modeling.py) and its endpoint-specific '
           'hyper-parameters (Figure 4). For LR, four GAT layers with four heads of 16 units, each followed by graph-wise layer '
           'normalisation and ReLU, precede a single-head final layer. The 16-dimensional GTV embedding is read out, passed '
           'through dropout, optionally concatenated with 16 encoded clinical variables, and mapped by a linear layer and '
@@ -148,7 +154,7 @@ blocks = [
         ['Stopping and checkpoint', 'early stopping on validation loss (patience 50, max 500 epochs); lowest validation loss', 'same'],
         ['Sensitivity analysis', 'Mateus rule: best validation AUC with train–validation gap ≤ 0.05', 'same'],
         ['Seeds / parameters', '3 seeds averaged / 15,057 (with clinical input)', '3 / 1,841'],
-    ], [5.2, 7.0, 4.8], 'Network and training settings. OS uses the LR settings because RadGraph specifies no OS model.'),
+    ], [5.2, 7.0, 4.8], 'Network and training settings. OS uses the LR settings because no OS model has been published.'),
 
     ('h1', H[10]),
     ('p', 'Two random forests are trained on the same splits: one on the GTV features chosen by each selector, which isolates '
@@ -165,26 +171,27 @@ blocks = [
           'for direct comparison.'),
 
     ('h1', H[12]),
-    ('p', 'The pipeline (radgraph-hnscc) is a Python package with a single command-line entry point. Every stage is cached '
+    ('p', 'The pipeline (grafs-gat) is a Python package with a single command-line entry point. Every stage is cached '
           'and deterministic for a given seed, every model is stored as a self-contained checkpoint (weights, '
           'hyper-parameters, selected features, scaler, clinical encoder, threshold and topology), and an inference tool '
           'applies the stored ensembles to new patients without retraining. The manuscript figures, tables and every number '
           'quoted in the text are regenerated from the results by one script.'),
-    ('code', 'cd radgraph-hnscc\n'
+    ('code', 'cd grafs-gat\n'
              './run_mateus_study.sh            # full study\n'
              'python export_results.py         # study tables and figures\n'
              'python predict.py --task LR --dataset MAASTRO   # inference'),
 
     ('h1', H[13]),
-    ('p', 'Results on the 199-patient image set are preliminary (Figure 5). For LR, the GAT chosen on validation reached an '
-          'external AUC of 0.71 (95% CI 0.62–0.81) with clinical variables in the cohort split, above the 0.59 of the Mateus '
-          'et al. CNN; in cross-validation the mean per-fold AUC matched the CNN (0.51–0.56 versus 0.53–0.57). No configuration '
-          'was significantly better than the RadGraph reference after Holm correction. DM and OS were not predicted better '
-          'than chance by the configurations chosen on validation, consistent with the small number of development events. '
-          'Spectral Graph-FS gave the most stable selections (Kuncheva 0.64–0.73 across folds, against 0.11–0.34 for LASSO), but '
-          'stability was not associated with external discrimination, and validation AUC did not predict external AUC '
-          '(Spearman ρ between −0.46 and 0.20). The final-layer attention was nearly uniform (within ±1.2% of 1/21 for 98% of '
-          'supervoxels), so attention maps should not be interpreted as localising risk.'),
+    ('p', 'Results of the full study (complete Head-Neck-PET-CT collection, preprocessing version 4; Figure 5). External AUCs '
+          'of the configurations chosen on validation were 0.54–0.66 for LR, 0.66–0.73 for DM and 0.62–0.66 for OS. No LR or OS '
+          'configuration differed significantly from the reference configuration after Holm correction, and the eight DM '
+          'configurations that differed were all worse. The clinical-only random forest was the strongest DM model (AUC 0.82 in '
+          'cross-validation). Compared with the Mateus et al. CNN, the GAT was similar for LR (mean per-fold AUC 0.54–0.62 versus '
+          '0.53–0.57) and OS (0.62–0.65 versus 0.63–0.69) but inferior for DM (0.62–0.73 versus 0.83–0.93). Spectral Graph-FS gave '
+          'the most stable selections (Kuncheva 0.71–0.84 across folds, against 0.16–0.29 for LASSO), but across selectors '
+          'stability was inversely related to external AUC for LR (Spearman ρ = −0.92) and OS (ρ = −0.74). A random forest on the '
+          'same GTV features was as good as the GAT, validation AUC predicted external AUC poorly (ρ 0.07–0.59), and the '
+          'final-layer attention remained nearly uniform, so attention maps should not be interpreted as localising risk.'),
     ('fig', 'fig_roc_all.png', 16.0, 'External ROC curves for LR, DM and OS under both designs, with and without clinical data.'),
     ('fig', 'fig6_stability.png', 16.0, 'Feature-selection stability (Kuncheva index) across folds, bootstrap resamples and centres.'),
 
@@ -214,7 +221,7 @@ blocks = [
 ]
 
 if __name__ == '__main__':
-    d = Doc('Spatial Radiomic Graph Attention Networks for Head and Neck Cancer',
+    d = Doc('GRAFS-GAT: Graph Feature Selection with Graph Attention Networks for Head and Neck Cancer',
             'Study rationale, design and methods: feature selection, graph topology and external validation',
             'Study rationale, design and methods',
             'Supersedes "GNN_Paper -- Introduction_and_Methods" (May 2026), which described a single-cohort design.')

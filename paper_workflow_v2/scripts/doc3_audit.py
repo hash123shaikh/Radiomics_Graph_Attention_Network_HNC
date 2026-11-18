@@ -1,4 +1,4 @@
-"""Document 3: implementation history, methodological audit and roadmap (upgrade of RadGraph_Bug_Log_and_Future_Work)."""
+"""Document 3: implementation history, methodological audit and roadmap (upgrade of the original bug log in paper_workflow/)."""
 from docgen import Doc
 
 H = ['Overview', 'Phase 1: engineering defects (version 1)', 'Phase 2: methodological audit',
@@ -36,25 +36,32 @@ audit = [
     ['Network', 'Extra input projection, ELU, batch-normalised clinical projection.',
      'Authors\' architecture: GATConv → LayerNorm → ReLU, GTV read-out, dropout 0.5, clinical concatenation, linear output.'],
     ['Checkpoint', 'Early stopping on validation AUC (patience 15–30); best epoch often epoch 1.',
-     'Lowest validation loss (patience 50) as in RadGraph; Mateus rule as sensitivity analysis.'],
+     'Lowest validation loss (patience 50) as in Bae et al. (2025); Mateus rule as sensitivity analysis.'],
     ['Clinical variables', 'ECOG and tumour volume (MAASTRO only) used; Head-Neck-PET-CT does not record them.',
      '16 variables recorded identically in both cohorts (age, sex, HPV, T, N, subsite, chemotherapy).'],
     ['Feature count', 'Documents stated ~83 PyRadiomics features.', '93 features (18 first order and 75 texture).'],
     ['Interpolation', 'Drafts described B-spline CT resampling.', 'Code uses linear interpolation; manuscript corrected.'],
+    ['Development images', 'HECKTOR release: 199 of 298 patients, all oropharyngeal, more than half of the events missing.',
+     'Complete TCIA collection: CT of the PET/CT with RTSTRUCT for every patient; per-patient primary-GTV map; events identical to Mateus et al.'],
+    ['Supervoxels', 'SLIC on the whole 50 mm box with min–max scaling: about one fifth of supervoxels mostly air.',
+     'Preprocessing v4: body mask and soft-tissue window (−160 to 240 HU) before SLIC.'],
 ]
 
 blocks = [
     ('h1', H[0]),
     ('p', 'This document records how the radiomic graph pipeline evolved from a first working implementation to the current '
           'study code. Version 1 (May 2026) documented the engineering defects that prevented the pipeline from running. A '
-          'subsequent review against the RadGraph publication, the authors\' code and the validation design of Mateus et al. '
+          'subsequent review against the original publication (Bae et al. 2025), the authors\' code and the validation design of Mateus et al. '
           'identified methodological problems that did not cause errors but would have invalidated the results. Both are '
           'listed here, followed by the open issues identified in the current data and a prioritised roadmap.'),
     ('table', ['Period', 'Milestone'], [
         ['May 2026', 'version 1: five-stage pipeline running on 121 MAASTRO patients; validation AUC 0.64 on 19 patients'],
-        ['Nov 2026', 'restructured package radgraph-hnscc; corrected outcome rule, scaling, network and validation'],
+        ['Nov 2026', 'restructured package grafs-gat; corrected outcome rule, scaling, network and validation'],
         ['Nov 2026', 'Mateus et al. design adopted; LR, DM and OS; nine feature-selection strategies × four topologies'],
-        ['Nov 2026', 'full study run (both designs, both checkpoint rules), exported results, manuscript draft'],
+        ['Nov 2026', 'first full study run on the 199-patient HECKTOR image set (preprocessing v3), manuscript draft'],
+        ['Nov 2026', 'repository released (MIT); reproducibility tooling; v3 model release v0.1.0-models'],
+        ['Nov 2026', 'Stage 2 refinements (body mask, soft-tissue window) as preprocessing v4'],
+        ['17–18 Nov 2026', 'complete TCIA Head-Neck-PET-CT (298 patients, DICOM) loaded; full study re-run with v4; manuscript updated'],
     ], [2.6, 14.4], 'Timeline.'),
 
     ('h1', H[1]),
@@ -66,7 +73,7 @@ blocks = [
           'stopping silently selected an untrained model.'),
 
     ('h1', H[2]),
-    ('p', 'The audit compared every stage with the RadGraph paper, its supplementary material, the authors\' released code '
+    ('p', 'The audit compared every stage with Bae et al. (2025), its supplementary material, the authors\' released code '
           '(CodeRelease) and the protocol of Mateus et al. The table lists each problem, why it mattered and how it is handled '
           'in the current code.'),
     ('table', ['Topic', 'Version 1', 'Current implementation'], audit, [3.0, 6.6, 7.4], 'Methodological corrections.'),
@@ -78,47 +85,50 @@ blocks = [
 
     ('h1', H[3]),
     ('table', ['Component', 'Status'], [
-        ['Preprocessing and supervoxels', '336 patients (199 Canadian, 137 MAASTRO); 100 supervoxels each'],
+        ['Preprocessing and supervoxels', '435 patients (298 Canadian, 137 MAASTRO), preprocessing v4; 100 supervoxels target'],
         ['Radiomic features', '93 per region, cached'],
         ['Feature selection and stability', 'nine strategies; stability across folds, bootstrap and centres'],
         ['Graphs and models', 'four topologies; LR, DM, OS; both designs; both checkpoint rules; 3 seeds'],
-        ['Results export', 'study tables, ROC figures, per-patient predictions'],
+        ['Results export', 'study tables, ROC figures, per-patient predictions (outputs/results)'],
         ['Inference', 'self-contained checkpoints; predict.py reproduces stored predictions to 10⁻⁷'],
-        ['Manuscript', 'complete draft with supplementary material; regenerated from the results by one script'],
+        ['Manuscript', 'complete draft updated to the full-cohort v4 results; regenerated from the results by one script'],
     ], [5.0, 12.0], 'Pipeline status.'),
-    ('p', 'The main results on the 199-patient image set: for LR, external AUC 0.71 (95% CI 0.62–0.81) with clinical variables '
-          'in the cohort split, above the published CNN (0.59); no configuration significantly better than the RadGraph '
-          'reference; DM and OS not predicted better than chance by the configurations chosen on validation; spectral Graph-FS '
-          'the most stable selector; validation AUC not predictive of external AUC; near-uniform attention.'),
+    ('p', 'The main results of the full study: external AUCs of the configurations chosen on validation 0.54–0.66 for LR, '
+          '0.66–0.73 for DM and 0.62–0.66 for OS; no configuration significantly better than the reference configuration; '
+          'clinical-only random forest strongest for DM (0.82); GAT similar to the published CNN for LR and OS, inferior for DM; '
+          'spectral Graph-FS the most stable selector but among the least discriminative (stability–AUC ρ −0.92 for LR); '
+          'random forest on the same GTV features as good as the GAT; validation AUC weakly predictive of external AUC; '
+          'near-uniform attention. The earlier 199-patient result for LR (0.71 in the cohort split) did not replicate.'),
     ('fig', 'fig5_auc_overview.png', 16.0, 'External AUC with 95% CI for all endpoints, designs and input sets.'),
 
     ('h1', H[4]),
     ('table', ['Issue', 'Evidence', 'Consequence', 'Action'], [
-        ['Incomplete development images', '199 of 298 patients; all oropharyngeal; more than half of events missing',
-         'low power, subsite shift to MAASTRO (36% larynx)', 'obtain full TCIA collection and re-run'],
-        ['Air in supervoxels', 'median 22% of supervoxels > 50% air', 'graph nodes that describe air', 'body mask in Stage 2'],
-        ['Compressed soft-tissue contrast', 'soft tissue mapped to 0.26–0.28 of the SLIC intensity range',
-         'supervoxels follow air and bone boundaries', 'soft-tissue window before SLIC'],
-        ['Near-uniform attention', '98% of weights within ±1.2% of the mean', 'no interpretable attention maps',
+        ['Poor LR transfer', 'LR AUC 0.54–0.66 for the GAT and 0.53–0.59 for the published CNN',
+         'locoregional signal does not transfer to MAASTRO', 'study cohort differences (subsite, chemotherapy, PET/CT vs planning CT)'],
+        ['Graph adds no information', 'random forest on the GTV features as good as the GAT for every endpoint',
+         'peritumoral nodes not yet useful', 'more events; nodal GTV nodes; finer supervoxels'],
+        ['Near-uniform attention', 'attention 0.047–0.048 against a uniform 0.048', 'no interpretable attention maps',
          'more events; lower attention dropout; attention entropy regularisation'],
-        ['Few DM events', '12 development and 7 external events', 'DM not estimable', 'full collection; time-to-event models'],
-        ['Unreliable model selection', 'validation–external AUC correlation −0.46 to 0.20', 'chosen configuration ≈ random',
+        ['Few external DM events', '7 MAASTRO events', 'DM confidence intervals span 0.4–0.9', 'additional external cohort; time-to-event models'],
+        ['Unreliable model selection', 'validation–external AUC correlation 0.07 to 0.59', 'chosen configuration close to a random draw',
          'pre-specified reference; nested CV; report the grid'],
+        ['Stability vs discrimination', 'most stable selector (spectral Graph-FS) among the least discriminative',
+         'stability is not a surrogate for prognostic value', 'report both; hybrid Graph-FS as compromise'],
     ], [3.4, 4.6, 4.2, 4.8], 'Open issues identified in the current study.'),
 
     ('h1', H[5]),
     ('h2', 'Priority 1: before submission'),
     ('numbered', [
-        'Obtain the complete Head-Neck-PET-CT collection (planning CT and RTSTRUCT for all 298 patients), re-run the study and '
-        'regenerate the manuscript; re-read Results and Discussion afterwards.',
-        'Confirm the provenance of the current Canadian images (HECKTOR release) and state it in the manuscript.',
+        'Done: complete Head-Neck-PET-CT collection loaded, study re-run with preprocessing v4, manuscript regenerated and '
+        'Results and Discussion rewritten.',
+        'Publish the v4 trained models as a new GitHub release and point the README and manuscript to it.',
         'Fill in the author details, funding, ethics statement and repository URL, and verify every reference.',
     ]),
     ('h2', 'Priority 2: method improvements'),
     ('numbered', [
-        'Stage 2: body mask and soft-tissue window before SLIC; sensitivity analysis of the number of supervoxels.',
+        'Stage 2: sensitivity analysis of the number of supervoxels (body mask and soft-tissue window are implemented in v4).',
         'Time-to-event formulation (Cox or discrete-time survival loss) so that censored patients contribute.',
-        'Nested cross-validation for hyper-parameters instead of adopting RadGraph values; a dedicated OS configuration.',
+        'Nested cross-validation for hyper-parameters instead of adopting the published values; a dedicated OS configuration.',
         'Stability across radiomic extraction settings (bin width, resampling), as in the original Graph-FS study.',
         'Lymph-node nodes: add nodal GTVs as graph nodes connected to the primary tumour.',
     ]),
@@ -137,9 +147,10 @@ blocks = [
         'differed between the first implementation and the reference code.',
         '**Validation design determines the credibility of the result.** A single small random split gives an AUC that can '
         'change by 0.1 when two patients change.',
-        '**Count events, not patients.** Thirteen events cannot support a 15,000-parameter model or reliable model selection.',
+        '**Count events, not patients.** Thirty events cannot support a 15,000-parameter model or reliable model selection.',
         '**Report the reference and the whole grid.** The best validation configuration is an optimistic and unstable summary.',
-        '**Stability is not discrimination.** Graph-FS made the features reproducible but not more predictive.',
+        '**Stability is not discrimination.** Graph-FS made the features reproducible but, in its label-free form, less predictive.',
+        '**Re-run before claiming.** The 199-patient LR advantage disappeared on the complete collection.',
         '**Look at the images.** The air supervoxels and the compressed intensity range were only noticed when the supervoxels '
         'were drawn on the CT.',
         '**Make everything regenerable.** Cached stages, self-contained checkpoints and a figure script turned each re-run '
@@ -147,20 +158,20 @@ blocks = [
     ]),
 
     ('h1', H[7]),
-    ('table', ['Path (radgraph-hnscc/)', 'Content'], [
+    ('table', ['Path (grafs-gat/)', 'Content'], [
         ['main.py', 'command-line pipeline (all stages, --mode, --task, --fold, --epoch_rule)'],
         ['run_mateus_study.sh', 'the complete study'],
         ['export_results.py', 'study tables, figures and final models'],
         ['predict.py', 'inference with saved models'],
-        ['radgraph/config.py', 'cohorts, endpoints, designs, grid, hyper-parameters'],
-        ['radgraph/data/', 'loading, labels and clinical encoding, preprocessing, supervoxels, features, splits'],
-        ['radgraph/selection/', 'nine feature-selection strategies and stability measures'],
-        ['radgraph/graphs/', 'four topologies; datasets and class-balanced sampling'],
-        ['radgraph/models/gat.py', 'radiomic graph attention network'],
-        ['radgraph/engine/', 'training, evaluation, attention extraction, random-forest baselines'],
-        ['radgraph/experiments/', 'grid, cross-fold summary, export'],
-        ['radgraph/viz/', 'figures and HTML reports'],
-        ['outputs/', 'cache, runs, results, final_models'],
+        ['grafsgat/config.py', 'cohorts, endpoints, designs, grid, hyper-parameters'],
+        ['grafsgat/data/', 'loading, labels and clinical encoding, preprocessing, supervoxels, features, splits'],
+        ['grafsgat/selection/', 'nine feature-selection strategies and stability measures'],
+        ['grafsgat/graphs/', 'four topologies; datasets and class-balanced sampling'],
+        ['grafsgat/models/gat.py', 'radiomic graph attention network'],
+        ['grafsgat/engine/', 'training, evaluation, attention extraction, random-forest baselines'],
+        ['grafsgat/experiments/', 'grid, cross-fold summary, export'],
+        ['grafsgat/viz/', 'figures and HTML reports'],
+        ['outputs/', 'cache, runs, results, final_models of the current (v4, full-cohort) study'],
     ], [5.4, 11.6], 'Current code layout.'),
 ]
 
@@ -168,7 +179,7 @@ if __name__ == '__main__':
     d = Doc('Implementation History, Audit and Roadmap',
             'From the first working pipeline to a reproducible, externally validated study',
             'Implementation history, audit and roadmap',
-            'Supersedes RadGraph_Bug_Log_and_Future_Work (May 2026).')
+            'Supersedes the original bug log in paper_workflow/ (May 2026).')
     d.contents(H)
     d.add(blocks)
     print(d.save('03_Implementation_History_Audit_and_Roadmap_v2'))
