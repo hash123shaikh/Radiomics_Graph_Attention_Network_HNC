@@ -24,7 +24,8 @@ Modes: MATEUS_CV (5-fold CV on HNPET -> MAASTRO) | MATEUS_COHORT (HGJ+CHUS / HMR
 Tasks: LR, DM (2-year horizon), OS (4-year horizon)
 Each run is written to outputs/runs/<MODE>_<TASK>/ (open report.html); MATEUS_CV writes one
 sub-folder per fold (fold1..fold5) plus the cross-fold summary in the mode folder.
---epoch_rule auc_gap (Mateus et al. checkpoint rule) writes to outputs/runs/<MODE>_<TASK>_aucgap/.
+--epoch_rule mateus (exact checkpoint rule of Mateus et al.) writes to outputs/runs/<MODE>_<TASK>_mateus/,
+--epoch_rule auc_gap (earlier adapted AUC-gap rule) to outputs/runs/<MODE>_<TASK>_aucgap/.
 """
 
 import argparse
@@ -89,8 +90,9 @@ def main():
     ap.add_argument('--force', action='store_true', help='recompute cached results')
     ap.add_argument('--fold', type=int, default=None,
                     help=f'cross-validation modes: run this fold only (1..{config.N_FOLDS}; default all folds)')
-    ap.add_argument('--epoch_rule', default=config.EPOCH_RULE, choices=['val_loss', 'auc_gap'],
-                    help="checkpoint rule: lowest val loss (paper) or Mateus et al.'s train-val AUC gap rule")
+    ap.add_argument('--epoch_rule', default=config.EPOCH_RULE, choices=['val_loss', 'auc_gap', 'mateus'],
+                    help="checkpoint rule: lowest val loss (primary), Mateus et al.'s exact rule (mateus) "
+                         "or the earlier adapted train-val AUC-gap rule (auc_gap)")
     ap.add_argument('--preprocess', default=config.PREPROCESS, choices=list(config.PREPROCESS_PROFILES),
                     help="preprocessing profile: v4 = body mask + soft-tissue window (manuscript), v3 = earlier "
                          "analysis / release v0.1.0-models (default: $GRAFS_PREPROCESS or %(default)s)")

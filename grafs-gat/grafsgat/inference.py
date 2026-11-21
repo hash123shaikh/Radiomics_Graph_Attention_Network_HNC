@@ -33,7 +33,7 @@ FINAL_MODELS_DIR = config.OUTPUT_DIR / 'final_models'
 
 
 def run_folder(task, design, epoch_rule='val_loss'):
-    return config.RUNS_DIR / f"{design}_{task}{'' if epoch_rule == 'val_loss' else '_' + epoch_rule.replace('_', '')}"
+    return config.RUNS_DIR / f"{design}_{task}{config.rule_suffix(epoch_rule)}"
 
 
 def chosen_config(task, design, inputs='imaging', epoch_rule='val_loss'):

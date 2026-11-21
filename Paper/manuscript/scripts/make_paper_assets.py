@@ -66,6 +66,8 @@ allc = pd.read_csv(RES / 'all_configurations.csv')
 stab = pd.read_csv(RES / 'feature_selection_stability.csv')
 coh = pd.read_csv(RES / 'cohort_summary.csv')
 PRIMARY = 'val_loss'
+# checkpoint-rule sensitivity analysis: exact rule of Mateus et al. when its runs exist, else the adapted rule
+SENS_RULE = 'mateus' if (OUT / 'runs' / 'MATEUS_COHORT_OS_mateus' / 'results_summary.csv').exists() else 'auc_gap'
 
 numbers = {}          # macro name -> text
 
@@ -655,26 +657,34 @@ def table_method_topology():
 
 
 def table_epoch_rule():
-    """Supplementary: chosen / reference GAT under both checkpoint rules."""
+    """Supplementary: chosen / reference GAT under the checkpoint rules (primary, exact Mateus rule, adapted rule)."""
     m = main[main.role.isin(['chosen GAT', 'reference GAT'])]
-    lines = [r'\begin{tabular}{@{}llllcc@{}}', r'\toprule',
-             r'Outcome & Design & Inputs & Model & Lowest val.\ loss & Train--val AUC gap \\', r'\midrule']
+    rules = [r for r in ('val_loss', SENS_RULE, 'auc_gap') if r in set(m.epoch_rule)]
+    rules = list(dict.fromkeys(rules))
+    head = {'val_loss': r'Lowest val.\ loss', 'mateus': r'Mateus et al.\ rule', 'auc_gap': r'Adapted AUC-gap rule'}
+    lines = [r'\begin{tabular}{@{}llll' + 'c' * len(rules) + r'@{}}', r'\toprule',
+             r'Outcome & Design & Inputs & Model & ' + ' & '.join(head[r] for r in rules) + r' \\', r'\midrule']
     for t in TASKS:
         first = True
         for d in DESIGN:
             for inp in ('imaging', 'imaging+clinical'):
                 for role in ('chosen GAT', 'reference GAT'):
-                    v = {}
-                    for rule in ('val_loss', 'auc_gap'):
+                    v = []
+                    for rule in rules:
                         r = m[(m.task == t) & (m.design == d) & (m.inputs == inp) & (m.role == role) & (m.epoch_rule == rule)]
-                        v[rule] = ci(r.iloc[0]) if len(r) else '--'
+                        v.append(ci(r.iloc[0]) if len(r) else '--')
                     lines.append(f'{t if first else ""} & {DESIGN[d]} & {"Img" if inp == "imaging" else "Img+Clin"} & '
-                                 f'{"chosen" if role == "chosen GAT" else "reference"} & {v["val_loss"]} & {v["auc_gap"]} \\\\')
+                                 f'{"chosen" if role == "chosen GAT" else "reference"} & ' + ' & '.join(v) + r' \\')
                     first = False
         lines.append(r'\midrule')
     lines[-1] = r'\botrule'
     lines.append(r'\end{tabular}')
     (TAB / 'tabS_epoch_rule.tex').write_text('\n'.join(lines) + '\n')
+    for t, d, inp, key in (('DM', 'MATEUS_COHORT', 'imaging+clinical', 'DMCohClin'),
+                           ('LR', 'MATEUS_COHORT', 'imaging+clinical', 'LRCohClin')):
+        r = m[(m.task == t) & (m.design == d) & (m.inputs == inp) & (m.role == 'chosen GAT') & (m.epoch_rule == SENS_RULE)]
+        if len(r):
+            num(f'ruleChosen{key}', f'{r.iloc[0].test_auc:.2f}')
 
 
 def table_missing_images():
@@ -896,7 +906,7 @@ def extra_numbers():
         num(f'gridAbove{t}', f'{100 * (x > 0.5).mean():.0f}')
     m = main[main.role == 'reference GAT'].pivot_table(index=['task', 'design', 'inputs'],
                                                        columns='epoch_rule', values='test_auc')
-    d = (m.auc_gap - m.val_loss).abs()
+    d = (m[SENS_RULE] - m.val_loss).abs()
     num('ruleRefMax', f'{d.max():.2f}'); num('ruleRefMed', f'{d.median():.2f}')
     # reference configuration validation AUC in the cohort split (LR) -- below chance
     r = main[(main.task == 'LR') & (main.design == 'MATEUS_COHORT') & (main.role == 'reference GAT') &
@@ -1280,6 +1290,190 @@ def crop_user_architecture():
         im.crop((0, 0, w, int(h * 0.918))).save(FIG / 'fig_architecture_author.png')
 
 
+# ═════════════════════════════════════════════════════════════════════════════
+# Sources of variation in external AUC (grafs-gat/tools/variance_components.py)
+# ═════════════════════════════════════════════════════════════════════════════
+# Independent retraining of the Mateus et al. CNN/ANN with three seeds (11, 22, 33), 5-fold CV, test = MAASTRO;
+# mean test AUC over the folds that saved a checkpoint (number of folds in brackets). Source: reproduction
+# repository hash123shaikh/reproducibility-hnc-cnn, results/statistical_reproducibility/cv_reports.
+CNN_RETRAIN = {
+    ('LR', 'CNN, Img'): [(0.58, 4), (0.51, 3), (0.55, 3)], ('LR', 'CNN, Img+Clin'): [(None, 0), (None, 0), (0.53, 3)],
+    ('LR', 'ANN, Clin'): [(0.42, 5), (0.42, 5), (None, 0)],
+    ('DM', 'CNN, Img'): [(0.80, 3), (0.79, 4), (0.76, 4)], ('DM', 'CNN, Img+Clin'): [(0.89, 3), (0.87, 2), (0.88, 2)],
+    ('DM', 'ANN, Clin'): [(0.87, 2), (0.89, 2), (0.87, 4)],
+    ('OS', 'CNN, Img'): [(0.65, 4), (0.64, 2), (0.62, 2)], ('OS', 'CNN, Img+Clin'): [(0.69, 3), (0.68, 2), (0.68, 3)],
+    ('OS', 'ANN, Clin'): [(0.66, 2), (0.63, 3), (None, 0)],
+}
+CNN_REPORTED_CV = {('LR', 'CNN, Img'): 0.53, ('LR', 'CNN, Img+Clin'): 0.57, ('LR', 'ANN, Clin'): 0.53,
+                   ('DM', 'CNN, Img'): 0.83, ('DM', 'CNN, Img+Clin'): 0.88, ('DM', 'ANN, Clin'): 0.86,
+                   ('OS', 'CNN, Img'): 0.63, ('OS', 'CNN, Img+Clin'): 0.68, ('OS', 'ANN, Clin'): 0.63}
+
+
+def table_cnn_retrain():
+    lines = [r'\begin{tabular}{@{}lllllll@{}}', r'\toprule',
+             r'Outcome & Model & Reported & Seed 11 & Seed 22 & Seed 33 & Spread \\', r'\midrule']
+    for t in TASKS:
+        first = True
+        for m in ('CNN, Img', 'CNN, Img+Clin', 'ANN, Clin'):
+            v = CNN_RETRAIN[(t, m)]
+            cells = [f'{a:.2f} ({n}/5)' if a is not None else '--' for a, n in v]
+            vals = [a for a, _ in v if a is not None]
+            spread = f'{max(vals) - min(vals):.2f}' if len(vals) > 1 else '--'
+            lines.append(f'{TASK_LONG[t] if first else ""} & {m} & {CNN_REPORTED_CV[(t, m)]:.2f} & '
+                         + ' & '.join(cells) + f' & {spread} \\\\')
+            first = False
+        lines.append(r'\midrule')
+    lines[-1] = r'\botrule'
+    lines.append(r'\end{tabular}')
+    (TAB / 'tabS_cnn_retrain.tex').write_text('\n'.join(lines) + '\n')
+    dm = [a for a, _ in CNN_RETRAIN[('DM', 'CNN, Img')]]
+    num('cnnRetrainDMImgMin', f'{min(dm):.2f}'); num('cnnRetrainDMImgMax', f'{max(dm):.2f}')
+    dm = [a for a, _ in CNN_RETRAIN[('DM', 'ANN, Clin')]]
+    num('annRetrainDMMin', f'{min(dm):.2f}'); num('annRetrainDMMax', f'{max(dm):.2f}')
+    dm = [a for a, _ in CNN_RETRAIN[('DM', 'CNN, Img+Clin')]]
+    num('cnnRetrainDMClinMin', f'{min(dm):.2f}'); num('cnnRetrainDMClinMax', f'{max(dm):.2f}')
+
+
+def fig_variance():
+    f = RES / 'variance_components.csv'
+    if not f.exists():
+        print('  [variance] no variance_components.csv, skipped')
+        return
+    V = pd.read_csv(f)
+    V = V[V.rule == PRIMARY].set_index(['task', 'design'])
+    S = pd.read_csv(RES / 'single_model_auc.csv')
+    S = S[S.rule == PRIMARY]
+    E = pd.read_csv(RES / 'seed_ensemble_gain.csv')
+    fig = plt.figure(figsize=(7.2, 5.9))
+    gs = fig.add_gridspec(2, 3, height_ratios=[1, 1.25], hspace=0.78, wspace=0.12)
+    ax = fig.add_subplot(gs[0, :])
+    comps = [('selector', 'Feature selector', CAT[0]), ('topology', 'Topology', CAT[2]),
+             ('inputs', 'Clinical variables', CAT[3]), ('config_residual', 'Selector × topology × inputs', CAT[6]),
+             ('between_fold', 'CV fold (training patients)', CAT[4]), ('between_seed', 'Random seed', CAT[7])]
+    rows = [(t, d) for t in TASKS for d in DESIGN]
+    for i, key in enumerate(rows):
+        left = 0
+        for c, lab, col in comps:
+            w = max(float(V.loc[key, c]), 0) if np.isfinite(V.loc[key, c]) else 0
+            ax.barh(i, w, left=left, color=col, height=0.62, label=lab if i == 0 else None, edgecolor='white', lw=0.5)
+            if w >= 0.06:
+                ax.text(left + w / 2, i, f'{w:.0%}', ha='center', va='center', fontsize=6.5,
+                        color='white' if c in ('between_seed', 'selector', 'config_residual') else INK)
+            left += w
+    ax.set_yticks(range(len(rows)))
+    ax.set_yticklabels([f'{t}, {DESIGN[d]}' for t, d in rows])
+    ax.invert_yaxis(); ax.set_xlim(0, 1); ax.grid(axis='y', visible=False)
+    ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f'{x:.0%}'))
+    ax.set_xlabel('Share of the variance of single-model external AUC')
+    ax.legend(ncol=3, loc='upper center', bbox_to_anchor=(0.5, -0.27), fontsize=6.8, handlelength=1.2)
+    ax.set_title('a   Sources of variation', loc='left')
+    groups = [(d, i) for d in DESIGN for i in ('imaging', 'imaging+clinical')]
+    for j, t in enumerate(TASKS):
+        a2 = fig.add_subplot(gs[1, j], sharey=None if j == 0 else fig.axes[1])
+        data = [S[(S.task == t) & (S.design == d) & (S.inputs == i)].test_auc.values for d, i in groups]
+        bp = a2.boxplot(data, widths=0.55, patch_artist=True, showfliers=False, medianprops=dict(color=INK, lw=1))
+        for k, b in enumerate(bp['boxes']):
+            b.set_facecolor(CAT[0] if groups[k][0] == 'MATEUS_CV' else CAT[1]); b.set_alpha(0.35); b.set_edgecolor(INK2)
+        rng = np.random.default_rng(0)
+        for k, x in enumerate(data):
+            a2.scatter(k + 1 + rng.uniform(-0.18, 0.18, len(x)), x, s=1.5, color=INK2, alpha=0.25, lw=0)
+            ref = MATEUS_REPORTED[(groups[k][0], groups[k][1])][t]
+            a2.scatter(k + 1, float(ref.split()[0]), marker='D', s=22, color=CAT[7], zorder=5,
+                       label='Mateus et al. CNN (reported)' if k == 0 and j == 0 else None)
+        a2.axhline(0.5, color=NEUTRAL, ls='--', lw=0.8)
+        a2.set_xticks(range(1, 5)); a2.set_xticklabels(['CV\nImg', 'CV\nImg+Clin', 'Coh.\nImg', 'Coh.\nImg+Clin'], fontsize=6.5)
+        a2.set_ylim(0.15, 0.97); a2.set_title(('b   ' if j == 0 else '') + t, loc='left' if j == 0 else 'center')
+        if j == 0:
+            a2.set_ylabel('External AUC of single networks')
+            a2.legend(loc='lower left', fontsize=6.5, handletextpad=0.2)
+        else:
+            plt.setp(a2.get_yticklabels(), visible=False)
+    save(fig, 'fig_variance')
+    # numbers for the text
+    num('vcSeedMin', f'{V.between_seed.min() * 100:.0f}'); num('vcSeedMax', f'{V.between_seed.max() * 100:.0f}')
+    num('vcSelMin', f'{V.selector.min() * 100:.0f}'); num('vcSelMax', f'{V.selector.max() * 100:.0f}')
+    num('vcTopoMax', f'{V.topology.max() * 100:.0f}')
+    num('vcCfgMin', f'{V.between_config.min() * 100:.0f}'); num('vcCfgMax', f'{V.between_config.max() * 100:.0f}')
+    num('vcFoldMax', f'{V.between_fold.max() * 100:.0f}')
+    num('vcNmodels', f'{int(V.n_models.sum()):,}'.replace(',', '{,}'))
+    for t in TASKS:
+        x = S[S.task == t].test_auc
+        num(f'single{t}Min', f'{x.min():.2f}'); num(f'single{t}Max', f'{x.max():.2f}')
+        sd = E[E.task == t].sd.median()
+        num(f'seedSd{t}', f'{sd:.2f}')
+        num(f'ensGain{t}', f'{E[E.task == t].gain.mean():.2f}')
+    num('ensGainAll', f'{E.gain.mean():.2f}'); num('ensGainPos', f'{(E.gain > 0).mean() * 100:.0f}')
+    dm = S[(S.task == 'DM') & (S.design == 'MATEUS_CV')]
+    num('singleDMgeCNN', f'{(dm.test_auc >= 0.83).mean() * 100:.1f}')
+    r = V.between_seed / V.between_config
+    num('vcRatioMin', f'{r.min():.1f}'); num('vcRatioMax', f'{r.max():.1f}')
+    pct = []
+    for t in ('LR', 'OS'):
+        for d in DESIGN:
+            for i in ('imaging', 'imaging+clinical'):
+                x = S[(S.task == t) & (S.design == d) & (S.inputs == i)].test_auc
+                pct.append(100 * (x < float(MATEUS_REPORTED[(d, i)][t].split()[0])).mean())
+    num('cnnPctMin', f'{min(pct):.0f}'); num('cnnPctMax', f'{max(pct):.0f}')
+
+
+def table_mateus_style():
+    """Supplementary: GRAFS-GAT reported exactly as Mateus et al. report their CNN (exact checkpoint rule, one seed,
+    CV mean over the folds that saved a checkpoint), for each of the three seeds."""
+    import json
+    f = RES / 'mateus_style_report.csv'
+    if not f.exists():
+        print('  [mateus-style] no mateus_style_report.csv, skipped')
+        return
+    R = pd.read_csv(f)
+    seeds = sorted(R.seed.unique())
+    lines = [r'\begin{tabular}{@{}llll' + 'c' * len(seeds) + r'c@{}}', r'\toprule',
+             r'Outcome & Design & Inputs & Model & ' + ' & '.join(f'Seed {s}' for s in seeds) + r' & Spread \\',
+             r'\midrule']
+    spreads = []
+    for t in TASKS:
+        first = True
+        for d in DESIGN:
+            for inp in ('imaging', 'imaging+clinical'):
+                for role in ('chosen', 'reference'):
+                    r = R[(R.task == t) & (R.design == d) & (R.inputs == inp) & (R.role == role)].sort_values('seed')
+                    if r.empty:
+                        continue
+                    cells = []
+                    for _, x in r.iterrows():
+                        if d == 'MATEUS_CV':
+                            cells.append(f'{x.auc_saved_mean:.2f} ({x.auc_saved_min:.2f}--{x.auc_saved_max:.2f}) '
+                                         f'[{int(x.n_saved)}/5]')
+                        else:
+                            cells.append(f'{x.auc_saved_mean:.2f} [{x.ci_low:.2f}, {x.ci_high:.2f}]'
+                                         + ('' if x.n_saved else r'$^{\dagger}$'))
+                    sp = r.auc_saved_mean.max() - r.auc_saved_mean.min()
+                    spreads.append((sp, t, d, inp, role, r.auc_saved_mean.min(), r.auc_saved_mean.max()))
+                    lines.append(f'{t if first else ""} & {DESIGN[d]} & {"Img" if inp == "imaging" else "Img+Clin"} & '
+                                 f'{role} & ' + ' & '.join(cells) + f' & {sp:.2f} \\\\')
+                    first = False
+        lines.append(r'\midrule')
+    lines[-1] = r'\botrule'
+    lines.append(r'\end{tabular}')
+    (TAB / 'tabS_mateus_style.tex').write_text('\n'.join(lines) + '\n')
+    sp = sorted(spreads)
+    num('msSpreadMed', f'{np.median([x[0] for x in sp]):.2f}')
+    num('msSpreadMax', f'{sp[-1][0]:.2f}')
+    num('msSpreadMaxLo', f'{sp[-1][5]:.2f}'); num('msSpreadMaxHi', f'{sp[-1][6]:.2f}')
+    num('msSpreadMaxWhat', f'{sp[-1][1]}, {DESIGN[sp[-1][2]].lower()}, '
+        f'{"imaging" if sp[-1][3] == "imaging" else "imaging and clinical"} inputs, {sp[-1][4]} configuration')
+    # how often the exact rule saved a checkpoint at all (all single networks)
+    root = OUT / 'runs'
+    for t in TASKS:
+        hs = [json.loads(h.read_text()) for h in root.glob(f'MATEUS_*_{t}_mateus/**/histories/*__s*.json')]
+        if hs:
+            num(f'msSaved{t}', f'{100 * np.mean([not h.get("mateus_fallback_last_epoch", True) for h in hs]):.0f}')
+    V = pd.read_csv(RES / 'variance_components.csv')
+    V = V[V.rule == 'mateus']
+    if len(V):
+        num('vcSeedMtMin', f'{V.between_seed.min() * 100:.0f}'); num('vcSeedMtMax', f'{V.between_seed.max() * 100:.0f}')
+        num('vcCfgMtMax', f'{V.between_config.max() * 100:.0f}')
+
+
 def remove_unused_figures():
     """Delete intermediate / unused figure files: keep only what main.tex and supplementary.tex include."""
     import re
@@ -1295,7 +1489,7 @@ if __name__ == '__main__':
     fig_stability(); fig_stab_vs_auc(); fig_val_vs_test()
     fig_heatmap(); fig_gat_vs_rf(); fig_roc_all(); crop_user_architecture(); fig_graphfs_workflow(); fig_selection_frequency(); fig_topologies_ct(); fig_attention_ct()
     table_cohort(); table_main(); table_mateus(); table_stability()
-    table_method_topology(); table_epoch_rule(); table_gtv_only(); table_missing_images(); table_stability_full()
+    table_method_topology(); table_epoch_rule(); table_gtv_only(); table_cnn_retrain(); fig_variance(); table_mateus_style(); table_missing_images(); table_stability_full()
     extra_numbers()
     write_numbers()
     remove_unused_figures()

@@ -7,7 +7,10 @@ Follows the authors' GAT_modeling.py + Table S2:
   - checkpoint (config.EPOCH_RULE), early stopping on validation loss in both cases:
       'val_loss' lowest validation loss after MIN_EPOCHS_BEFORE_SELECT (Bae et al. 2025)
       'auc_gap'  highest validation AUC among epochs whose train AUC - val AUC <= gap; gap starts at
-                 AUC_GAP_START and grows by AUC_GAP_STEP until an epoch qualifies (Mateus et al. 2023)
+                 AUC_GAP_START and grows by AUC_GAP_STEP until an epoch qualifies (adapted from Mateus et al.)
+      'mateus'   exact rule of the Mateus et al. code: save when val AUC > best saved AND > threshold AND
+                 |train AUC - val AUC| < max difference (config.MATEUS_SAVE_RULE); keep the LAST saved model;
+                 stop once train AUC > config.MATEUS_STOP_TRAIN_AUC; nothing saved -> last epoch
   - decision threshold = Youden's J on VALIDATION (never on test)
 """
 
@@ -99,12 +102,15 @@ def train(task, method, topology, use_clinical=False, seed=None, n_epochs=None, 
     else:
         crit = nn.BCEWithLogitsLoss()
 
-    n_epochs = n_epochs or config.N_EPOCHS
     rule = config.EPOCH_RULE
-    if rule not in ('val_loss', 'auc_gap'):
+    n_epochs = n_epochs or (config.MATEUS_MAX_EPOCHS if rule == 'mateus' else config.N_EPOCHS)
+    if rule not in config.EPOCH_RULES:
         raise ValueError(f"Unknown EPOCH_RULE {rule}")
-    # un-resampled training set, only needed for the train AUC of the 'auc_gap' rule
-    train_eval_ld = DataLoader(ds['train'], batch_size=g['batch_size'], shuffle=False) if rule == 'auc_gap' else None
+    # un-resampled training set, only needed for the train AUC of the 'auc_gap' / 'mateus' rules
+    train_eval_ld = (DataLoader(ds['train'], batch_size=g['batch_size'], shuffle=False)
+                     if rule in ('auc_gap', 'mateus') else None)
+    m_thr, m_diff = config.MATEUS_SAVE_RULE[(task, bool(use_clinical))]
+    m_best, m_saved, stop_reason = 0.0, 0, None
     hist = {'train_loss': [], 'val_loss': [], 'val_auc': [], 'train_auc': [], 'lr': [], 'epoch_rule': rule,
             'best_epoch': None, 'best_val_loss': float('inf'), 'best_val_auc': None}
     best, since, t0, states, best_loss = None, 0, time.time(), {}, float('inf')
@@ -123,6 +129,11 @@ def train(task, method, topology, use_clinical=False, seed=None, n_epochs=None, 
         if ep >= config.MIN_EPOCHS_BEFORE_SELECT:
             if rule == 'auc_gap':
                 states[ep] = {k_: v.detach().cpu().clone() for k_, v in model.state_dict().items()}
+            if rule == 'mateus' and np.isfinite(va) and np.isfinite(ta) and va > m_best and va > m_thr \
+                    and abs(va - ta) < m_diff:
+                m_best, m_saved = va, m_saved + 1
+                best = {k_: v.detach().cpu().clone() for k_, v in model.state_dict().items()}
+                hist.update(best_epoch=ep, best_val_loss=vl, best_val_auc=va)
             if vl < best_loss:
                 best_loss, since = vl, 0
                 if rule == 'val_loss':
@@ -132,7 +143,11 @@ def train(task, method, topology, use_clinical=False, seed=None, n_epochs=None, 
                 since += 1
         if verbose and (ep == 1 or ep % 50 == 0):
             print(f"    ep {ep:4d} | train {tr:.4f} | val {vl:.4f} AUC {va:.3f} | {time.time() - t0:.0f}s")
-        if since >= config.EARLY_STOPPING_PATIENCE:
+        if since >= config.EARLY_STOPPING_PATIENCE and rule != 'mateus':
+            stop_reason = 'val_loss_patience'
+            break
+        if rule == 'mateus' and np.isfinite(ta) and ta > config.MATEUS_STOP_TRAIN_AUC:
+            stop_reason = 'train_auc_above_stop'
             break
     if rule == 'auc_gap' and states:
         eps = np.array(sorted(states))
@@ -147,6 +162,9 @@ def train(task, method, topology, use_clinical=False, seed=None, n_epochs=None, 
             hist.update(best_epoch=e, best_val_loss=hist['val_loss'][e - 1], best_val_auc=hist['val_auc'][e - 1],
                         auc_gap_used=round(float(gap), 3))
         states.clear()
+    if rule == 'mateus':
+        hist.update(mateus_threshold=m_thr, mateus_max_diff=m_diff, mateus_n_saved=m_saved,
+                    mateus_fallback_last_epoch=m_saved == 0, stop_reason=stop_reason, last_epoch=ep)
     if best is None:
         best = {k_: v.detach().cpu().clone() for k_, v in model.state_dict().items()}
         hist.update(best_epoch=ep, best_val_loss=vl, best_val_auc=va)

@@ -104,7 +104,7 @@ desktop session was killed by systemd-oomd; use `N_JOBS=4` on a 64 GB machine.
 
 ```
 cache/preprocessed/, cache/features/        per-patient preprocessing and radiomic features
-runs/<MODE>_<TASK>[_aucgap]/                every model, graph, prediction, figure, report.html, provenance.json
+runs/<MODE>_<TASK>[_mateus|_aucgap]/              every model, graph, prediction, figure, report.html, provenance.json
 results/                                    study-level CSVs and figures (export_results.py)
 final_models/                               chosen ensembles + model cards (what the GitHub release contains)
 ```

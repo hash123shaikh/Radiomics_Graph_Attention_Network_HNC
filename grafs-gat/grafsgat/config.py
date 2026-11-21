@@ -353,9 +353,26 @@ GRAD_CLIP_NORM           = 1.0
 # checkpoint rule: 'val_loss' = lowest validation loss (Bae et al. 2025)
 #                  'auc_gap'  = highest validation AUC among epochs with train AUC - val AUC <= gap,
 #                               gap starts at 0.05 and grows by 0.05 until an epoch qualifies (Mateus et al.)
+#                  'mateus'   = exact rule of the Mateus et al. code (hn_cnn/fit.py): a checkpoint is saved whenever
+#                               the validation AUC exceeds every earlier saved one AND a fixed threshold AND
+#                               |train AUC - val AUC| < a fixed maximum (per outcome / input set, values from the
+#                               authors' training scripts); the LAST saved checkpoint is kept; training stops once the
+#                               training AUC exceeds 0.95; if nothing was ever saved, the last epoch is kept
 EPOCH_RULE    = 'val_loss'
 AUC_GAP_START = 0.05
 AUC_GAP_STEP  = 0.05
+# (validation-AUC threshold, maximum |train - val| AUC difference), by (task, use_clinical)
+MATEUS_SAVE_RULE = {('DM', False): (0.80, 0.03), ('DM', True): (0.80, 0.05),
+                    ('LR', False): (0.70, 0.03), ('LR', True): (0.65, 0.15),
+                    ('OS', False): (0.75, 0.05), ('OS', True): (0.70, 0.05)}
+MATEUS_STOP_TRAIN_AUC = 0.95
+MATEUS_MAX_EPOCHS = 200        # no validation-loss early stopping under the 'mateus' rule (as in the original code)
+EPOCH_RULES = ('val_loss', 'auc_gap', 'mateus')
+
+
+def rule_suffix(rule=None):
+    rule = rule or EPOCH_RULE
+    return '' if rule == 'val_loss' else '_' + rule.replace('_', '')
 
 # ============================================================================
 # EVALUATION
@@ -403,7 +420,7 @@ NUM_WORKERS = 0
 # ============================================================================
 def mode_dir(task):
     """outputs/runs/<MODE>_<TASK>[_aucgap]/ (folds live underneath in 'cv' modes)."""
-    d = RUNS_DIR / f"{MODE}_{task}{'' if EPOCH_RULE == 'val_loss' else '_' + EPOCH_RULE.replace('_', '')}"
+    d = RUNS_DIR / f"{MODE}_{task}{rule_suffix()}"
     d.mkdir(parents=True, exist_ok=True)
     return d
 

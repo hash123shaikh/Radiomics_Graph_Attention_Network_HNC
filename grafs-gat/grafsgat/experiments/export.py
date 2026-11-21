@@ -33,7 +33,7 @@ from grafsgat.viz.style import CAT, INK, INK_2, MUTED, NEUTRAL, save
 RESULTS_DIR = config.OUTPUT_DIR / 'results'
 FINAL_DIR = config.OUTPUT_DIR / 'final_models'
 DESIGNS = ['MATEUS_CV', 'MATEUS_COHORT']
-RULES = ['val_loss', 'auc_gap']
+RULES = ['val_loss', 'auc_gap', 'mateus']
 DESIGN_NAMES = {'MATEUS_CV': '5-fold CV (fold ensemble)', 'MATEUS_COHORT': 'Cohort split (HGJ+CHUS / HMR+CHUM)'}
 TOPO = {'radiomic_star': 'radiomic star', 'spatial_star': 'spatial star', 'radiomic_knn': 'radiomic kNN',
         'spatial_knn': 'spatial kNN', 'RF': 'random forest'}
@@ -49,7 +49,7 @@ def available_runs():
     for task in config.TASKS:
         for design in DESIGNS:
             for rule in RULES:
-                d = config.RUNS_DIR / f"{design}_{task}{'' if rule == 'val_loss' else '_aucgap'}"
+                d = config.RUNS_DIR / f"{design}_{task}{config.rule_suffix(rule)}"
                 if (d / 'results_summary.csv').exists():
                     out.append((task, design, rule))
     return out
@@ -215,7 +215,7 @@ def _run_preprocess(task, design, rule):
 def _copy_models(task, design, rule, row, fold_ens):
     from grafsgat.inference import find_checkpoints
     ck = find_checkpoints(task, design, row.method, row.topology, bool(row.use_clinical), rule)
-    dest = FINAL_DIR / f"{design}_{task}{'' if rule == 'val_loss' else '_aucgap'}" / row.inputs
+    dest = FINAL_DIR / f"{design}_{task}{config.rule_suffix(rule)}" / row.inputs
     if dest.exists():
         shutil.rmtree(dest)
     for f in ck:
@@ -250,7 +250,7 @@ def _predictions(task, design, rule, row, comb, fold_ens):
             v = fold_ens[k][key]
             vf = set(v[v.split == 'val'].patient_id)
             e.loc[e.patient_id.isin(vf), 'cv_fold'] = k
-    name = f"{design}_{task}{'' if rule == 'val_loss' else '_aucgap'}__{row.method}__{row.topology}__" \
+    name = f"{design}_{task}{config.rule_suffix(rule)}__{row.method}__{row.topology}__" \
            f"{'img+clin' if row.use_clinical else 'img'}.csv"
     f = RESULTS_DIR / 'predictions' / name
     f.parent.mkdir(parents=True, exist_ok=True)

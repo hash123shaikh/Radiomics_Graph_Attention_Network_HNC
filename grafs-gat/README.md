@@ -68,9 +68,21 @@ mode folder holds the cross-fold summary:
   with a 95% bootstrap CI; `test_auc_fold_min/max` give the single-fold range reported by Mateus et al.
 - `cv_*` columns measure the stability of feature selection across the folds.
 
-Checkpoint rule: lowest validation loss (Bae et al. 2025, primary). `--epoch_rule auc_gap` applies Mateus
-et al.'s rule instead (highest validation AUC among epochs with train AUC − validation AUC ≤ 0.05, the
-threshold raised in steps of 0.05 until an epoch qualifies) and writes to `<MODE>_<TASK>_aucgap/`.
+Checkpoint rule: lowest validation loss (Bae et al. 2025, primary). Two alternatives are available:
+
+- `--epoch_rule mateus` reproduces the rule of the Mateus et al. code (`hn_cnn/fit.py`): a checkpoint is saved
+  whenever the validation AUC beats every earlier saved one, exceeds a fixed threshold and differs from the
+  training AUC by less than a fixed maximum (DM 0.80/0.03, DM+clinical 0.80/0.05, LR 0.70/0.03,
+  LR+clinical 0.65/0.15, OS 0.75/0.05, OS+clinical 0.70/0.05; `config.MATEUS_SAVE_RULE`); the last saved
+  checkpoint is kept, training stops once the training AUC exceeds 0.95 (at most 200 epochs, no
+  validation-loss early stopping), and the last epoch is kept if nothing was saved. Output: `<MODE>_<TASK>_mateus/`.
+- `--epoch_rule auc_gap` is an earlier adaptation (highest validation AUC among epochs with train − validation
+  AUC ≤ 0.05, the limit raised in steps of 0.05 until an epoch qualifies). Output: `<MODE>_<TASK>_aucgap/`.
+
+Analysis tools: `tools/variance_components.py` scores every single network (selector × topology × inputs ×
+fold × seed) on the external cohort and decomposes the variance of these AUCs into design, fold and seed
+components; `tools/mateus_style_report.py` reports the networks trained with `--epoch_rule mateus` exactly as
+Mateus et al. report theirs (one seed; CV mean over the folds that saved a checkpoint).
 
 The Table S3 reference features exist only for LR and DM; for OS the reference GAT is mRMR + radiomic star,
 and the GAT uses the LR hyper-parameters (Table S2 has no OS entry).
@@ -97,7 +109,7 @@ Every stage is cached: models, metrics and predictions that exist are not recomp
 ```bash
 python main.py --mode MATEUS_CV --task DM --from_stage select          # 5 folds + cross-fold summary
 python main.py --mode MATEUS_CV --task OS --from_stage select --fold 3 # a single fold
-python main.py --mode MATEUS_COHORT --task LR --from_stage select --epoch_rule auc_gap
+python main.py --mode MATEUS_COHORT --task LR --from_stage select --epoch_rule mateus
 python main.py --mode MATEUS_CV --task LR --stage benchmark --methods graph_fs_cc mrmr --topologies radiomic_star --seeds 42
 ```
 
