@@ -458,12 +458,7 @@ def table_main():
 
 def table_mateus():
     """Our external AUCs next to Mateus et al. 2023 (Tables 3 and 4 of their paper)."""
-    mateus = {  # (design, inputs) -> {task: text}
-        ('MATEUS_CV', 'imaging'): {'DM': '0.83 (0.76--0.90)', 'LR': '0.53 (0.48--0.59)', 'OS': '0.63 (0.57--0.72)'},
-        ('MATEUS_COHORT', 'imaging'): {'DM': '0.89 [0.79, 0.98]', 'LR': '0.45 [0.32, 0.57]', 'OS': '0.67 [0.57, 0.77]'},
-        ('MATEUS_CV', 'imaging+clinical'): {'DM': '0.88 (0.86--0.90)', 'LR': '0.57 (0.53--0.60)', 'OS': '0.68 (0.63--0.71)'},
-        ('MATEUS_COHORT', 'imaging+clinical'): {'DM': '0.93 [0.86, 0.99]', 'LR': '0.59 [0.47, 0.70]', 'OS': '0.69 [0.59, 0.79]'},
-    }
+    mateus = MATEUS_REPORTED
     a = allc[(allc.model == 'GAT') & (allc.epoch_rule == PRIMARY) & allc.best_by_val]
     lines = [r'\begin{tabular}{@{}lllll@{}}', r'\toprule',
              r'Outcome & Design & Inputs & This study (GAT) & Mateus et al.\ CNN \\', r'\midrule']
@@ -481,6 +476,104 @@ def table_mateus():
     lines[-1] = r'\botrule'
     lines.append(r'\end{tabular}')
     (TAB / 'table3_mateus.tex').write_text('\n'.join(lines) + '\n')
+
+
+MATEUS_REPORTED = {
+    ('MATEUS_CV', 'imaging'): {'DM': '0.83 (0.76--0.90)', 'LR': '0.53 (0.48--0.59)', 'OS': '0.63 (0.57--0.72)'},
+    ('MATEUS_COHORT', 'imaging'): {'DM': '0.89 [0.79, 0.98]', 'LR': '0.45 [0.32, 0.57]', 'OS': '0.67 [0.57, 0.77]'},
+    ('MATEUS_CV', 'imaging+clinical'): {'DM': '0.88 (0.86--0.90)', 'LR': '0.57 (0.53--0.60)', 'OS': '0.68 (0.63--0.71)'},
+    ('MATEUS_COHORT', 'imaging+clinical'): {'DM': '0.93 [0.86, 0.99]', 'LR': '0.59 [0.47, 0.70]', 'OS': '0.69 [0.59, 0.79]'},
+}
+
+
+def _gtv_fmt(P, design):
+    """Mateus format from a prediction table (split/fold/patient_id/label/prob[/seed]):
+    CV -> mean (range) of per-fold external AUCs; cohort split -> AUC [95% CI]."""
+    from grafsgat.utils import safe_auc, bootstrap_auc_ci
+    t = P[P.split == 'test']
+    if design == 'MATEUS_CV':
+        a = []
+        for _, x in t.groupby('fold'):
+            e = x.groupby('patient_id').agg(label=('label', 'first'), prob=('prob', 'mean'))
+            a.append(safe_auc(e.label, e.prob))
+        return f'{np.mean(a):.2f} ({min(a):.2f}--{max(a):.2f})', float(np.mean(a))
+    e = t.groupby('patient_id').agg(label=('label', 'first'), prob=('prob', 'mean'))
+    v = safe_auc(e.label, e.prob)
+    lo, hi = bootstrap_auc_ci(e.label.values, e.prob.values)
+    return f'{v:.2f} [{lo:.2f}, {hi:.2f}]', float(v)
+
+
+def table_gtv_only():
+    """Sensitivity analysis without the peritumoral region (grafs-gat/gtv_only/)."""
+    G = OUT / 'gtv_only' / 'results'
+    if not (G / 'gtv_only_summary.csv').exists():
+        print('  [gtv-only] no results, skipped')
+        return
+    S = pd.read_csv(G / 'gtv_only_summary.csv')
+    a = allc[(allc.model == 'GAT') & (allc.epoch_rule == PRIMARY) & allc.best_by_val]
+    lines = [r'\begin{tabular}{@{}llllllll@{}}', r'\toprule',
+             r' & & & \multicolumn{4}{c}{This study} & \\', r'\cmidrule(lr){4-7}',
+             r'Outcome & Design & Inputs & GTV + peritumoral GAT & GTV radiomics & Intratumoral GAT & '
+             r'Simple reference$^{a}$ & Mateus et al.\ CNN \\', r'\midrule']
+    cfg_lines = [r'\begin{tabular}{@{}llllp{0.55\textwidth}@{}}', r'\toprule',
+                 r'Outcome & Design & Inputs & Model & Configuration chosen on validation AUC \\', r'\midrule']
+    short = {'LR': 'LR', 'DM': 'DM', 'OS': 'OS'}
+    for t in TASKS:
+        first = True
+        for d in ('MATEUS_CV', 'MATEUS_COHORT'):
+            dn = 'CV' if d == 'MATEUS_CV' else 'Coh'
+            for inp in ('imaging', 'imaging+clinical'):
+                tag = 'Img' if inp == 'imaging' else 'Clin'
+                r = a[(a.task == t) & (a.design == d) & (a.inputs == inp)].iloc[0]
+                peri = (f'{r.test_auc_fold_mean:.2f} ({r.test_auc_fold_min:.2f}--{r.test_auc_fold_max:.2f})'
+                        if d == 'MATEUS_CV' else ci(r))
+                Pc = pd.read_csv(G / f'classical_pred_{t}_{d}.csv.gz')
+                sc = S[(S.task == t) & (S.design == d) &
+                       (S.model == f'GTV classical, {inp} (chosen on val)')].iloc[0]
+                cls, vc = _gtv_fmt(Pc[Pc.config == sc.config], d)
+                Pg = pd.read_csv(G / f'gat_pred_{t}_{d}_{inp}.csv.gz')
+                gat, vg = _gtv_fmt(Pg, d)
+                ref_cfg = 'volume|lr' if inp == 'imaging' else 'clinical|lr'
+                ref, vr = _gtv_fmt(Pc[Pc.config == ref_cfg], d)
+                num(f'gtvCls{t}{dn}{tag}', f'{vc:.2f}')
+                num(f'gtvGat{t}{dn}{tag}', f'{vg:.2f}')
+                num(f'gtvRef{t}{dn}{tag}', f'{vr:.2f}')
+                lines.append(f'{TASK_LONG[t] if first else ""} & {DESIGN[d]} & {"Img" if inp == "imaging" else "Img+Clin"}'
+                             f' & {peri} & {cls} & {gat} & {ref} & {MATEUS_REPORTED[(d, inp)][t]} \\\\')
+                fs_, meth, k, clf, _ = sc.config.split('|')
+                clfn = {'lr_C0.03': 'logistic, $C=0.03$', 'lr_C0.3': 'logistic, $C=0.3$', 'lr_C3': 'logistic, $C=3$',
+                        'rf_d3': 'random forest, depth 3', 'rf_d6': 'random forest, depth 6'}[clf]
+                fsn = {'orig': '93 original', 'orig+shape': '93 original + 14 shape',
+                       'full': '1223 (shape, original, LoG, wavelet)'}[fs_]
+                methn = {'mrmr': 'mRMR', 'lasso': 'LASSO', 'ucorr': 'univariate AUC filter'}[meth]
+                cfg_lines.append(f'{short[t] if first else ""} & {DESIGN[d]} & {"Img" if inp == "imaging" else "Img+Clin"}'
+                                 f' & GTV radiomics & {fsn} features; {methn}, $k={k[1:]}$; {clfn} \\\\')
+                gc = S[(S.task == t) & (S.design == d) &
+                              (S.model == f'Intratumoral GAT, {inp} (chosen on val)')].iloc[0].config
+                kv = dict(x.split('=') for x in gc.split())
+                glob = {'none': 'none', 'shape': 'GTV shape', 'shape+clinical': 'GTV shape + clinical'}[kv['global']]
+                cfg_lines.append(f' & & & Intratumoral GAT & {"mRMR" if kv["fs"] == "mrmr" else "LASSO"}, $k={kv["k"]}$; '
+                                 f'{kv["topology"]} edges; read-out vector: {glob}; {kv["layers"]} layers, '
+                                 f'{kv["heads"]} heads $\\times$ {kv["hidden"]} units; dropout {kv["dropout"]}; '
+                                 f'learning rate {float(kv["lr"]):g}; weight decay {float(kv["wd"]):g}; '
+                                 f'{kv["sampling"]} sampling \\\\')
+                first = False
+        lines.append(r'\midrule'); cfg_lines.append(r'\midrule')
+    lines[-1] = r'\botrule'; cfg_lines[-1] = r'\botrule'
+    lines.append(r'\end{tabular}'); cfg_lines.append(r'\end{tabular}')
+    (TAB / 'table_gtv_only.tex').write_text('\n'.join(lines) + '\n')
+    (TAB / 'tabS_gtv_only_configs.tex').write_text('\n'.join(cfg_lines) + '\n')
+    # grid sizes and spread (for the text)
+    import glob as _g
+    ncls = len(pd.read_csv(G / 'classical_DM_MATEUS_CV.csv'))
+    ngat = len(pd.read_csv(G / 'gat_search_DM_MATEUS_CV.csv'))
+    num('gtvNcls', str(ncls)); num('gtvNgat', str(ngat))
+    sub_n = []
+    for f in sorted((OUT / 'gtv_only' / 'features').glob('*.npz')):
+        with np.load(f) as z:
+            sub_n.append(len(z['sub']))
+    num('gtvSubMed', str(int(np.median(sub_n)))); num('gtvSubMin', str(int(min(sub_n))))
+    num('gtvSubMax', str(int(max(sub_n)))); num('gtvNpat', str(len(sub_n)))
 
 
 def table_stability():
@@ -1194,7 +1287,7 @@ if __name__ == '__main__':
     fig_stability(); fig_stab_vs_auc(); fig_val_vs_test()
     fig_heatmap(); fig_gat_vs_rf(); fig_roc_all(); crop_user_architecture(); fig_graphfs_workflow(); fig_selection_frequency(); fig_topologies_ct(); fig_attention_ct()
     table_cohort(); table_main(); table_mateus(); table_stability()
-    table_method_topology(); table_epoch_rule(); table_missing_images(); table_stability_full()
+    table_method_topology(); table_epoch_rule(); table_gtv_only(); table_missing_images(); table_stability_full()
     extra_numbers()
     write_numbers()
     remove_unused_figures()

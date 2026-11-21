@@ -219,6 +219,16 @@ Table~\ref{tab:epoch} compares the primary checkpoint rule (lowest validation lo
 \resizebox{\textwidth}{!}{\input{tables/tabS_epoch_rule}}
 \end{table}
 
+\section{GTV-only sensitivity analysis}
+
+Table~\ref{tab:gtvcfg} lists the configurations chosen on validation AUC in the sensitivity analysis restricted to the gross tumour volume (main text, Table~6). The conventional grid comprised \gtvNcls{} configurations per endpoint and design, and the intratumoral GAT search \gtvNgat{} randomly drawn configurations; the external AUC of every configuration is stored with the code release. Because the configurations were chosen on validation folds with few events, the choices varied between designs and input sets. Small subsets were preferred ($k\leq6$ in ten of the twelve settings); logistic regression was chosen in seven settings and a random forest in five; the feature set containing the shape features was chosen in seven settings, and the set including the filtered features only once.
+
+\begin{table}[!htb]
+\centering
+\caption{Configurations chosen on validation AUC in the GTV-only sensitivity analysis.}\label{tab:gtvcfg}
+\resizebox{\textwidth}{!}{\input{tables/tabS_gtv_only_configs}}
+\end{table}
+
 %% =========================================================================================
 \section{Clinical variables}
 
