@@ -485,6 +485,12 @@ MATEUS_REPORTED = {
     ('MATEUS_COHORT', 'imaging+clinical'): {'DM': '0.93 [0.86, 0.99]', 'LR': '0.59 [0.47, 0.70]', 'OS': '0.69 [0.59, 0.79]'},
 }
 
+# Mateus et al. 2023, Table 4 ("Our ANN", testing row): clinical variables only, no imaging
+MATEUS_ANN = {
+    'MATEUS_CV': {'DM': '0.86 (0.81--0.89)', 'LR': '0.53 (0.50--0.54)', 'OS': '0.63 (0.61--0.64)'},
+    'MATEUS_COHORT': {'DM': '0.87 [0.78, 0.95]', 'LR': '0.41 [0.29, 0.54]', 'OS': '0.63 [0.52, 0.73]'},
+}
+
 
 def _gtv_fmt(P, design):
     """Mateus format from a prediction table (split/fold/patient_id/label/prob[/seed]):
@@ -511,10 +517,11 @@ def table_gtv_only():
         return
     S = pd.read_csv(G / 'gtv_only_summary.csv')
     a = allc[(allc.model == 'GAT') & (allc.epoch_rule == PRIMARY) & allc.best_by_val]
-    lines = [r'\begin{tabular}{@{}llllllll@{}}', r'\toprule',
-             r' & & & \multicolumn{4}{c}{This study} & \\', r'\cmidrule(lr){4-7}',
+    lines = [r'\begin{tabular}{@{}lllllllll@{}}', r'\toprule',
+             r' & & & \multicolumn{4}{c}{This study} & \multicolumn{2}{c}{Mateus et al.} \\',
+             r'\cmidrule(lr){4-7}\cmidrule(lr){8-9}',
              r'Outcome & Design & Inputs & GTV + peritumoral GAT & GTV radiomics & Intratumoral GAT & '
-             r'Simple reference$^{a}$ & Mateus et al.\ CNN \\', r'\midrule']
+             r'Simple reference$^{a}$ & CNN & ANN$^{b}$ \\', r'\midrule']
     cfg_lines = [r'\begin{tabular}{@{}llllp{0.55\textwidth}@{}}', r'\toprule',
                  r'Outcome & Design & Inputs & Model & Configuration chosen on validation AUC \\', r'\midrule']
     short = {'LR': 'LR', 'DM': 'DM', 'OS': 'OS'}
@@ -539,7 +546,8 @@ def table_gtv_only():
                 num(f'gtvGat{t}{dn}{tag}', f'{vg:.2f}')
                 num(f'gtvRef{t}{dn}{tag}', f'{vr:.2f}')
                 lines.append(f'{TASK_LONG[t] if first else ""} & {DESIGN[d]} & {"Img" if inp == "imaging" else "Img+Clin"}'
-                             f' & {peri} & {cls} & {gat} & {ref} & {MATEUS_REPORTED[(d, inp)][t]} \\\\')
+                             f' & {peri} & {cls} & {gat} & {ref} & {MATEUS_REPORTED[(d, inp)][t]}'
+                             f' & {MATEUS_ANN[d][t] if inp == "imaging+clinical" else "--"} \\\\')
                 fs_, meth, k, clf, _ = sc.config.split('|')
                 clfn = {'lr_C0.03': 'logistic, $C=0.03$', 'lr_C0.3': 'logistic, $C=0.3$', 'lr_C3': 'logistic, $C=3$',
                         'rf_d3': 'random forest, depth 3', 'rf_d6': 'random forest, depth 6'}[clf]
