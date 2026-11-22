@@ -119,8 +119,18 @@ def summarise(P):
     return pd.DataFrame(out)
 
 
+CLS_FEAT = __import__('os').environ.get('CLS_FEAT', 'primary')   # 'primary' GTV | 'total' GTV (primary + nodal)
+PFX = 'classical' if CLS_FEAT == 'primary' else f'classical_{CLS_FEAT}'
+
+
+def feature_table():
+    if CLS_FEAT == 'total':
+        return pd.read_csv(config.OUTPUT_DIR / 'popgraph' / 'total_gtv_features.csv', index_col=0)
+    return gtv_table()
+
+
 def run(task, design):
-    G = gtv_table()
+    G = feature_table()
     sp = [(k, s) for k, s in splits(task, design)]
     rows = []
     for k, s in sp:
@@ -129,9 +139,9 @@ def run(task, design):
             raise RuntimeError(f'{len(missing)} patients lack GTV-only features: {missing[:5]}')
         rows += run_split(task, design, k if k else 0, s, G)
     P = pd.DataFrame(rows)
-    P.to_csv(RES_DIR / f'classical_pred_{task}_{design}.csv.gz', index=False)
+    P.to_csv(RES_DIR / f'{PFX}_pred_{task}_{design}.csv.gz', index=False)
     S = summarise(P).sort_values('val_auc', ascending=False)
-    S.to_csv(RES_DIR / f'classical_{task}_{design}.csv', index=False)
+    S.to_csv(RES_DIR / f'{PFX}_{task}_{design}.csv', index=False)
     return task, design
 
 
@@ -141,10 +151,10 @@ if __name__ == '__main__':
     ap.add_argument('--designs', nargs='+', default=['MATEUS_CV', 'MATEUS_COHORT'])
     ap.add_argument('--n_jobs', type=int, default=6)
     a = ap.parse_args()
-    gtv_table()
+    feature_table()
     from joblib import Parallel, delayed
     jobs = [(t, d) for t in a.tasks for d in a.designs]
     for t, d in Parallel(n_jobs=min(a.n_jobs, len(jobs)), verbose=5)(delayed(run)(t, d) for t, d in jobs):
-        S = pd.read_csv(RES_DIR / f'classical_{t}_{d}.csv')
+        S = pd.read_csv(RES_DIR / f'{PFX}_{t}_{d}.csv')
         print(f'\n=== {t} {d}: top 5 by validation AUC')
         print(S.head(5)[['config', 'val_auc', 'test_auc', 'test_auc_fold_mean']].to_string(index=False))

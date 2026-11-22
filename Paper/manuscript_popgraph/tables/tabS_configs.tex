@@ -1,0 +1,44 @@
+\begin{tabular}{@{}lllllllll@{}}
+\toprule
+Endpoint & Design & Inputs & Family & Features & Selector & $k$ & Graph & Val.\ AUC \\
+\midrule
+LR & 5-fold CV & Imaging & GAT & original + shape & LASSO & 2 & 20-NN & 0.567 \\
+LR & 5-fold CV & Imaging & MLP & all (incl.\ LoG) & mRMR & 2 & -- & 0.577 \\
+LR & 5-fold CV & Imaging + clinical & GraphSAGE & original + shape & LASSO & 4 & 5-NN & 0.638 \\
+LR & 5-fold CV & Imaging + clinical & MLP & original + shape & LASSO & 4 & -- & 0.581 \\
+LR & 5-fold CV & Clinical & GCN & -- & -- & -- & 20-NN & 0.560 \\
+LR & 5-fold CV & Clinical & MLP & -- & -- & -- & -- & 0.535 \\
+LR & Cohort split & Imaging & GCN & original + shape & LASSO & 2 & 20-NN & 0.559 \\
+LR & Cohort split & Imaging & MLP & original + shape & LASSO & 2 & -- & 0.537 \\
+LR & Cohort split & Imaging + clinical & GCN & original + shape & LASSO & 4 & 10-NN & 0.592 \\
+LR & Cohort split & Imaging + clinical & MLP & original + shape & LASSO & 4 & -- & 0.559 \\
+LR & Cohort split & Clinical & GAT & -- & -- & -- & 10-NN & 0.648 \\
+LR & Cohort split & Clinical & MLP & -- & -- & -- & -- & 0.633 \\
+\midrule
+DM & 5-fold CV & Imaging & GCN & original + shape & univariate & 4 & 5-NN & 0.768 \\
+DM & 5-fold CV & Imaging & MLP & original + shape & univariate & 4 & -- & 0.777 \\
+DM & 5-fold CV & Imaging + clinical & GraphSAGE & original + shape & univariate & 4 & 20-NN & 0.793 \\
+DM & 5-fold CV & Imaging + clinical & MLP & original + shape & univariate & 4 & -- & 0.797 \\
+DM & 5-fold CV & Clinical & GAT & -- & -- & -- & 10-NN & 0.732 \\
+DM & 5-fold CV & Clinical & MLP & -- & -- & -- & -- & 0.732 \\
+DM & Cohort split & Imaging & GraphSAGE & all (incl.\ LoG) & LASSO & 8 & 20-NN & 0.901 \\
+DM & Cohort split & Imaging & MLP & all (incl.\ LoG) & LASSO & 8 & -- & 0.895 \\
+DM & Cohort split & Imaging + clinical & GCN & all (incl.\ LoG) & LASSO & 8 & 20-NN & 0.886 \\
+DM & Cohort split & Imaging + clinical & MLP & all (incl.\ LoG) & LASSO & 8 & -- & 0.886 \\
+DM & Cohort split & Clinical & GCN & -- & -- & -- & 10-NN & 0.714 \\
+DM & Cohort split & Clinical & MLP & -- & -- & -- & -- & 0.681 \\
+\midrule
+OS & 5-fold CV & Imaging & GCN & all (incl.\ LoG) & LASSO & 2 & 20-NN & 0.733 \\
+OS & 5-fold CV & Imaging & MLP & original + shape & univariate & 2 & -- & 0.719 \\
+OS & 5-fold CV & Imaging + clinical & GCN & original + shape & univariate & 2 & 5-NN & 0.719 \\
+OS & 5-fold CV & Imaging + clinical & MLP & original + shape & univariate & 2 & -- & 0.715 \\
+OS & 5-fold CV & Clinical & GAT & -- & -- & -- & 10-NN & 0.686 \\
+OS & 5-fold CV & Clinical & MLP & -- & -- & -- & -- & 0.682 \\
+OS & Cohort split & Imaging & GraphSAGE & original + shape & LASSO & 4 & 5-NN & 0.740 \\
+OS & Cohort split & Imaging & MLP & original + shape & univariate & 2 & -- & 0.726 \\
+OS & Cohort split & Imaging + clinical & GraphSAGE & original + shape & LASSO & 4 & 5-NN & 0.739 \\
+OS & Cohort split & Imaging + clinical & MLP & original + shape & LASSO & 2 & -- & 0.716 \\
+OS & Cohort split & Clinical & GCN & -- & -- & -- & 5-NN & 0.670 \\
+OS & Cohort split & Clinical & MLP & -- & -- & -- & -- & 0.682 \\
+\botrule
+\end{tabular}

@@ -1,0 +1,15 @@
+\begin{tabular}{@{}llccccccccccccc@{}}
+\toprule
+ & & \multicolumn{4}{c}{LR} & \multicolumn{4}{c}{DM} & \multicolumn{4}{c}{OS} & \\
+\cmidrule(lr){3-6}\cmidrule(lr){7-10}\cmidrule(lr){11-14}
+ & & \multicolumn{2}{c}{CV} & \multicolumn{2}{c}{Cohort} & \multicolumn{2}{c}{CV} & \multicolumn{2}{c}{Cohort} & \multicolumn{2}{c}{CV} & \multicolumn{2}{c}{Cohort} & \\
+Tumour region & Clinical & Img & +Cl & Img & +Cl & Img & +Cl & Img & +Cl & Img & +Cl & Img & +Cl & Wins \\
+\midrule
+CNN (Mateus et al.) & -- & 0.53 & 0.57 & 0.45 & 0.59 & 0.83 & 0.88 & 0.89 & 0.93 & 0.63 & 0.68 & 0.67 & 0.69 & -- \\
+\midrule
+Primary GTV & T, N, volume & \textbf{0.61} & \textbf{0.58} & \textbf{0.63} & \textbf{0.63} & 0.65 & 0.78 & 0.70 & 0.65 & \textbf{0.67} & \textbf{0.70} & 0.65 & 0.67 & 6/12 \\
+Primary GTV & T, N, burden & \textbf{0.61} & \textbf{0.58} & \textbf{0.63} & \textbf{0.60} & 0.65 & 0.84 & 0.70 & 0.72 & \textbf{0.67} & \textbf{0.69} & 0.65 & \textbf{0.69} & 7/12 \\
+Primary + nodal GTV & T, N, volume & \textbf{0.62} & \textbf{0.58} & \textbf{0.63} & \textbf{0.61} & \textbf{0.85} & 0.88 & 0.87 & 0.86 & \textbf{0.73} & \textbf{0.72} & \textbf{0.72} & \textbf{0.72} & 9/12 \\
+Primary + nodal GTV & T, N, burden & \textbf{0.62} & \textbf{0.59} & \textbf{0.63} & \textbf{0.60} & \textbf{0.85} & 0.87 & 0.87 & 0.85 & \textbf{0.73} & \textbf{0.72} & \textbf{0.72} & \textbf{0.70} & 9/12 \\
+\botrule
+\end{tabular}

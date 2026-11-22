@@ -161,6 +161,23 @@ validation Youden threshold, the label when known, and whether the patient was u
 
 Everything is collected in `report.html` (one self-contained file).
 
+## Population-graph analysis (`popgraph/`)
+
+A second study on the same protocol: one node per **patient**, edges to the most similar *training*
+patients (inductive cosine kNN), GCN / GraphSAGE / GAT versus the identical network **without edges**
+(MLP), on radiomic features of the primary GTV or of the **whole tumour** (primary + nodal GTVs).
+Manuscript: `../Paper/manuscript_popgraph/`; summary of findings: `popgraph/REPORT.md`.
+
+```
+popgraph/total_gtv_features.py   PyRadiomics features of the primary + nodal GTV union (479 / patient)
+popgraph/tumour_burden.py        primary, nodal and total GTV volume, number of nodal GTVs
+popgraph/run_popgnn.py           configuration grid (POPGNN_FEAT=primary|total, POPGNN_CLIN=mateus|burden)
+popgraph/graph_vs_mlp.py         selection within graph / MLP families, paired bootstrap, matched comparison
+popgraph/seed_robustness.py      retrain the chosen configurations with disjoint 10-seed ensembles
+popgraph/compare_mateus.py       side-by-side table with the CNN of Mateus et al.
+gtv_only/run_classical.py        logistic regression / random forest (CLS_FEAT=total for whole-tumour features)
+```
+
 ## Code layout
 
 ```
