@@ -164,6 +164,7 @@ def table_main(F, C):
                     cells.append(s)
                 if C is not None:
                     c = C[(C.task == t) & (C.design == d) & (C.inputs == i)].iloc[0]
+                    num('cls' + key(t, d, i), f'{c.ours:.2f}')
                     s = fmt(c, d)
                     if c.ours > ref:
                         s = '\\textbf{' + s.split(' ')[0] + '} ' + ' '.join(s.split(' ')[1:])
@@ -195,6 +196,9 @@ def table_main(F, C):
             c = C[(C.task == t) & (C.inputs != 'clinical')].ours
             num(f'cls{t}Min', f'{c.min():.2f}')
             num(f'cls{t}Max', f'{c.max():.2f}')
+            cc = C[(C.task == t) & (C.inputs == 'clinical')].ours
+            num(f'clsClin{t}Min', f'{cc.min():.2f}')
+            num(f'clsClin{t}Max', f'{cc.max():.2f}')
         g = F[(F.task == t) & (F.family == 'graph') & (F.inputs != 'clinical')].ours
         num(f'main{t}Min', f'{g.min():.2f}')
         num(f'main{t}Max', f'{g.max():.2f}')
@@ -285,6 +289,10 @@ def table_paired():
 
 
 # ── Supplementary: chosen configurations ───────────────────────────────────────────────────────
+CLF = {'lr_C0.03': 'logistic ($C$=0.03)', 'lr_C0.3': 'logistic ($C$=0.3)', 'lr_C3': 'logistic ($C$=3)',
+       'rf_d3': 'RF (depth 3)', 'rf_d6': 'RF (depth 6)'}
+
+
 def table_configs(F, C):
     body = ['\\begin{tabular}{@{}lllllllll@{}}', '\\toprule',
             'Endpoint & Design & Inputs & Family & Features & Selector & $k$ & Graph & Val.\\ AUC \\\\',
@@ -301,9 +309,13 @@ def table_configs(F, C):
                 if C is not None and i != 'clinical':
                     c = C[(C.task == t) & (C.design == d) & (C.inputs == i)].iloc[0]
                     f = c.config.split('|')
-                    body.append(f"{t} & {DNAME[d]} & {INAME[i]} & {f[-2] if len(f) > 3 else f[1]} & "
-                                f"{FSET.get(f[0], f[0])} & {FS.get(f[1], f[1])} & {f[2].lstrip('k')} & -- & "
-                                f"{c.val_auc:.3f} \\\\")
+                    if len(f) > 3:
+                        body.append(f"{t} & {DNAME[d]} & {INAME[i]} & {CLF.get(f[3], f[3])} & "
+                                    f"{FSET.get(f[0], f[0])} & {FS.get(f[1], f[1])} & {f[2].lstrip('k')} & -- & "
+                                    f"{c.val_auc:.3f} \\\\")
+                    else:
+                        body.append(f"{t} & {DNAME[d]} & {INAME[i]} & logistic & {f[0].replace('+', ' + ')} only & "
+                                    f"-- & -- & -- & {c.val_auc:.3f} \\\\")
         if t != TASKS[-1]:
             body.append('\\midrule')
     body += ['\\botrule', '\\end{tabular}']
@@ -472,7 +484,7 @@ def fig_seed(O):
     from matplotlib.lines import Line2D
     h = [Line2D([], [], marker='o', ls='', color=CAT[0], label='Population GNN, re-run'),
          Line2D([], [], marker='o', ls='', color=CAT[2], label='MLP, re-run'),
-         Line2D([], [], marker='_', ls='', ms=10, color=INK, label='Reported (seeds 0--9)'),
+         Line2D([], [], marker='_', ls='', ms=10, color=INK, label='Reported (seeds 0–9)'),
          Line2D([], [], color=CAT[6], label='CNN (Mateus et al.)')]
     fig.legend(handles=h, loc='lower center', ncol=4, bbox_to_anchor=(0.5, -0.06))
     fig.tight_layout(rect=(0, 0.05, 1, 1))
