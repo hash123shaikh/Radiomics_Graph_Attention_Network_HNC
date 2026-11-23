@@ -1,32 +1,35 @@
-\begin{tabular}{@{}llllllll@{}}
+\begin{tabular}{@{}lllllll@{}}
 \toprule
-Endpoint & Design & Inputs & Family & Reported & Mean (SD) over re-runs & Range & Re-runs above CNN \\
+Design & Inputs & Model & Reported & Mean (SD) & Range & Above CNN \\
 \midrule
-LR & 5-fold CV & Imaging & GNN & 0.623 & 0.623 (0.001) & 0.620--0.624 & 10/10 \\
-LR & 5-fold CV & Imaging & MLP & 0.590 & 0.590 (0.001) & 0.588--0.591 & 10/10 \\
-LR & 5-fold CV & Imaging + clinical & GNN & 0.591 & 0.591 (0.002) & 0.587--0.594 & 10/10 \\
-LR & 5-fold CV & Imaging + clinical & MLP & 0.587 & 0.588 (0.002) & 0.583--0.590 & 10/10 \\
-LR & Cohort split & Imaging & GNN & 0.627 & 0.624 (0.003) & 0.619--0.626 & 10/10 \\
-LR & Cohort split & Imaging & MLP & 0.636 & 0.635 (0.004) & 0.628--0.641 & 10/10 \\
-LR & Cohort split & Imaging + clinical & GNN & 0.598 & 0.595 (0.004) & 0.591--0.602 & 10/10 \\
-LR & Cohort split & Imaging + clinical & MLP & 0.585 & 0.587 (0.004) & 0.582--0.595 & 2/10 \\
+\multicolumn{7}{@{}l}{\textit{Locoregional recurrence}} \\
+5-fold CV & Imaging & Population GNN & 0.623 & 0.623 (0.001) & 0.620--0.624 & 10/10 \\
+ &  & MLP, no graph & 0.590 & 0.590 (0.001) & 0.588--0.591 & 10/10 \\
+ & Imaging + clinical & Population GNN & 0.591 & 0.591 (0.002) & 0.587--0.594 & 10/10 \\
+ &  & MLP, no graph & 0.587 & 0.588 (0.002) & 0.583--0.590 & 10/10 \\
+Cohort split & Imaging & Population GNN & 0.627 & 0.624 (0.003) & 0.619--0.626 & 10/10 \\
+ &  & MLP, no graph & 0.636 & 0.635 (0.004) & 0.628--0.641 & 10/10 \\
+ & Imaging + clinical & Population GNN & 0.598 & 0.595 (0.004) & 0.591--0.602 & 10/10 \\
+ &  & MLP, no graph & 0.585 & 0.587 (0.004) & 0.582--0.595 & 2/10 \\
 \midrule
-DM & 5-fold CV & Imaging & GNN & 0.848 & 0.848 (0.001) & 0.847--0.849 & 10/10 \\
-DM & 5-fold CV & Imaging & MLP & 0.850 & 0.850 (0.000) & 0.850--0.851 & 10/10 \\
-DM & 5-fold CV & Imaging + clinical & GNN & 0.866 & 0.865 (0.001) & 0.864--0.867 & 0/10 \\
-DM & 5-fold CV & Imaging + clinical & MLP & 0.862 & 0.862 (0.001) & 0.862--0.863 & 0/10 \\
-DM & Cohort split & Imaging & GNN & 0.870 & 0.874 (0.003) & 0.871--0.878 & 0/10 \\
-DM & Cohort split & Imaging & MLP & 0.861 & 0.859 (0.001) & 0.857--0.861 & 0/10 \\
-DM & Cohort split & Imaging + clinical & GNN & 0.854 & 0.855 (0.003) & 0.850--0.860 & 0/10 \\
-DM & Cohort split & Imaging + clinical & MLP & 0.856 & 0.855 (0.001) & 0.853--0.856 & 0/10 \\
+\multicolumn{7}{@{}l}{\textit{Distant metastasis}} \\
+5-fold CV & Imaging & Population GNN & 0.848 & 0.848 (0.001) & 0.847--0.849 & 10/10 \\
+ &  & MLP, no graph & 0.850 & 0.850 (0.000) & 0.850--0.851 & 10/10 \\
+ & Imaging + clinical & Population GNN & 0.866 & 0.865 (0.001) & 0.864--0.867 & 0/10 \\
+ &  & MLP, no graph & 0.862 & 0.862 (0.001) & 0.862--0.863 & 0/10 \\
+Cohort split & Imaging & Population GNN & 0.870 & 0.874 (0.003) & 0.871--0.878 & 0/10 \\
+ &  & MLP, no graph & 0.861 & 0.859 (0.001) & 0.857--0.861 & 0/10 \\
+ & Imaging + clinical & Population GNN & 0.854 & 0.855 (0.003) & 0.850--0.860 & 0/10 \\
+ &  & MLP, no graph & 0.856 & 0.855 (0.001) & 0.853--0.856 & 0/10 \\
 \midrule
-OS & 5-fold CV & Imaging & GNN & 0.734 & 0.727 (0.001) & 0.726--0.728 & 10/10 \\
-OS & 5-fold CV & Imaging & MLP & 0.742 & 0.741 (0.000) & 0.741--0.741 & 10/10 \\
-OS & 5-fold CV & Imaging + clinical & GNN & 0.719 & 0.719 (0.001) & 0.717--0.719 & 10/10 \\
-OS & 5-fold CV & Imaging + clinical & MLP & 0.723 & 0.723 (0.001) & 0.722--0.724 & 10/10 \\
-OS & Cohort split & Imaging & GNN & 0.721 & 0.722 (0.001) & 0.721--0.724 & 10/10 \\
-OS & Cohort split & Imaging & MLP & 0.735 & 0.735 (0.000) & 0.735--0.736 & 10/10 \\
-OS & Cohort split & Imaging + clinical & GNN & 0.696 & 0.696 (0.002) & 0.693--0.698 & 10/10 \\
-OS & Cohort split & Imaging + clinical & MLP & 0.719 & 0.720 (0.001) & 0.719--0.722 & 10/10 \\
+\multicolumn{7}{@{}l}{\textit{Overall survival}} \\
+5-fold CV & Imaging & Population GNN & 0.734 & 0.727 (0.001) & 0.726--0.728 & 10/10 \\
+ &  & MLP, no graph & 0.742 & 0.741 (0.000) & 0.741--0.741 & 10/10 \\
+ & Imaging + clinical & Population GNN & 0.719 & 0.719 (0.001) & 0.717--0.719 & 10/10 \\
+ &  & MLP, no graph & 0.723 & 0.723 (0.001) & 0.722--0.724 & 10/10 \\
+Cohort split & Imaging & Population GNN & 0.721 & 0.722 (0.001) & 0.721--0.724 & 10/10 \\
+ &  & MLP, no graph & 0.735 & 0.735 (0.000) & 0.735--0.736 & 10/10 \\
+ & Imaging + clinical & Population GNN & 0.696 & 0.696 (0.002) & 0.693--0.698 & 10/10 \\
+ &  & MLP, no graph & 0.719 & 0.720 (0.001) & 0.719--0.722 & 10/10 \\
 \botrule
 \end{tabular}

@@ -6,7 +6,7 @@ the saved results (no retraining).
 
 Reads   grafs-gat/outputs/popgraph/results/*  (run_popgnn.py, graph_vs_mlp.py, seed_robustness.py)
         grafs-gat/outputs/gtv_only/results/classical_total_*  (run_classical.py, CLS_FEAT=total)
-        grafs-gat/outputs/popgraph/tumour_burden.csv
+        grafs-gat/outputs/popgraph/tumour_burden.csv, grafs-gat/outputs/results/cohort_summary.csv
 Writes  ../figures/*.pdf|png, ../tables/*.tex, ../tables/numbers.tex
 """
 import os
@@ -72,6 +72,11 @@ def tex_table(name, body):
     (TAB / f'{name}.tex').write_text(body)
 
 
+def section(name, ncol):
+    """Italic endpoint row spanning the table, as in Table 1."""
+    return f'\\multicolumn{{{ncol}}}{{@{{}}l}}{{\\textit{{{name}}}}} \\\\'
+
+
 def fam(prefix):
     f = PG / f'{prefix}_family_selection.csv'
     return pd.read_csv(f) if f.exists() else None
@@ -116,39 +121,71 @@ def classical_chosen():
 
 
 # ── Table 1: tumour burden by cohort ───────────────────────────────────────────────────────────
-def table_burden():
+def table_cohort():
+    """Table 1: patient characteristics, tumour delineation and outcome cohorts (same layout as Table 1 of
+    the primary-GTV manuscript)."""
+    from grafsgat import config
+    from grafsgat.data.clinical import load_clinical, encode_clinical
+    from grafsgat.data.loader import HNSCCDataLoader
+    config.set_mode('MATEUS_CV')
+    coh = pd.read_csv(OUT / 'results' / 'cohort_summary.csv')
     B = pd.read_csv(OUT / 'popgraph' / 'tumour_burden.csv', index_col=0)
-    B['cohort'] = np.where(B.index.str.startswith('HN1'), 'MAASTRO', 'Canadian')
-    rows = []
-    for c in ('Canadian', 'MAASTRO'):
-        x = B[B.cohort == c]
-        q = lambda v: f"{np.median(v):.1f} ({np.percentile(v, 25):.1f}--{np.percentile(v, 75):.1f})"
-        rows.append([f'{len(x)}', f'{(x.n_nodal_gtv > 0).sum()} ({100 * (x.n_nodal_gtv > 0).mean():.0f}\\%)',
-                     q(x.vol_primary / 1000), q(x.vol_nodal[x.n_nodal_gtv > 0] / 1000) if (x.n_nodal_gtv > 0).any() else '--',
-                     q(x.vol_total / 1000), f"{100 * np.median(1 - x.vol_primary / x.vol_total):.0f}\\%",
-                     f"{100 * (1 - x.vol_primary / x.vol_total)[x.n_nodal_gtv > 0].median():.0f}\\%"])
-        num(f'nodalPct{c[:3]}', f'{100 * (x.n_nodal_gtv > 0).mean():.0f}')
-        num(f'nodalFracMed{c[:3]}', f"{100 * (1 - x.vol_primary / x.vol_total)[x.n_nodal_gtv > 0].median():.0f}")
+    pct = lambda n, d: f'{int(n)} ({100 * n / d:.0f}\\%)'
+    q = lambda v: f"{np.median(v):.1f} ({np.percentile(v, 25):.1f}--{np.percentile(v, 75):.1f})"
+    cols = {}
+    for ds, c in (('HNPET', 'Canadian'), ('MAASTRO', 'MAASTRO')):
+        df = load_clinical(ds)
+        img = set(HNSCCDataLoader(ds).eligible_patients_any_task())
+        enc, _ = encode_clinical(ds, harmonized=True)
+        ids = [p for p in df.patient_id if p in img and p in enc.index]
+        e, n = enc.loc[ids], len(ids)
+        col = {'Patients analysed': f'{n}',
+               'Age, median (IQR), y': f"{e.age.median():.0f} ({e.age.quantile(.25):.0f}--{e.age.quantile(.75):.0f})",
+               'Male sex': pct(e.sex_male.sum(), n),
+               'HPV positive': pct(e.hpv_positive.sum(), n), 'HPV negative': pct(e.hpv_negative.sum(), n),
+               'HPV unknown': pct(e.hpv_unknown.sum(), n),
+               'Oropharynx': pct(e.subsite_oropharynx.sum(), n), 'Larynx': pct(e.subsite_larynx.sum(), n),
+               'Other subsite': pct((1 - e.subsite_oropharynx - e.subsite_larynx).sum(), n),
+               'T3--T4': pct((e.t_t3 + e.t_t4).sum(), n), 'N2--N3': pct((e.n_n2 + e.n_n3).sum(), n),
+               'Concurrent chemotherapy': pct(e.concurrent_chemo.sum(), n)}
+        x = B[B.index.str.startswith('HN1')] if ds == 'MAASTRO' else B[~B.index.str.startswith('HN1')]
+        nod = x.n_nodal_gtv > 0
+        share = 1 - x.vol_primary / x.vol_total
+        col.update({'Separate nodal GTV delineated': pct(nod.sum(), len(x)),
+                    'Primary GTV, median (IQR), cm$^3$': q(x.vol_primary / 1000),
+                    'Nodal GTV$^{c}$, median (IQR), cm$^3$': q(x.vol_nodal[nod] / 1000),
+                    'Whole tumour, median (IQR), cm$^3$': q(x.vol_total / 1000),
+                    'Nodal share of whole tumour$^{c}$, median': f'{100 * share[nod].median():.0f}\\%'})
+        for t in TASKS:
+            r = coh[(coh.task == t) & (coh.cohort == ds)].iloc[0]
+            col[f'{t}, patients (events, rate)'] = f'{r.patients} ({r.events}, {100 * r.event_rate:.1f}\\%)'
+        cols[c] = col
+        num(f'nodalPct{c[:3]}', f'{100 * nod.mean():.0f}')
+        num(f'nodalFracMed{c[:3]}', f'{100 * share[nod].median():.0f}')
         num(f'nPat{c[:3]}', f'{len(x)}')
-    lab = ['Patients with delineations', 'Patients with nodal GTV, n (\\%)', 'Primary GTV, cm$^3$',
-           'Nodal GTV (if present), cm$^3$', 'Total GTV, cm$^3$', 'Nodal share of total GTV, median',
-           'Nodal share when nodes present, median']
+    T = pd.DataFrame(cols)
+    head = {'Separate nodal GTV delineated': 'Tumour delineation',
+            'LR, patients (events, rate)': 'Outcome cohorts$^{d}$'}
     body = ['\\begin{tabular}{@{}lll@{}}', '\\toprule',
-            'Tumour burden & Canadian centres & MAASTRO (HN1) \\\\', '\\midrule']
-    for j, l in enumerate(lab):
-        body.append(f'{l} & {rows[0][j]} & {rows[1][j]} \\\\')
+            'Characteristic & Canadian centres$^{a}$ & MAASTRO (HN1)$^{b}$ \\\\',
+            ' & training / validation & external test \\\\', '\\midrule']
+    for k, r in T.iterrows():
+        if k in head:
+            body += ['\\midrule', f'\\multicolumn{{3}}{{@{{}}l}}{{\\textit{{{head[k]}}}}} \\\\']
+        body.append(f'{k} & {r.Canadian} & {r.MAASTRO} \\\\')
     body += ['\\botrule', '\\end{tabular}']
-    tex_table('table_burden', '\n'.join(body) + '\n')
+    tex_table('table_cohort', '\n'.join(body) + '\n')
 
 
 # ── Table 2: main comparison ───────────────────────────────────────────────────────────────────
 def table_main(F, C):
     body = ['\\begin{tabular}{@{}lllllll@{}}', '\\toprule',
-            'Endpoint & Design & Inputs & CNN$^{a}$ & Population GNN$^{b}$ & MLP, no graph$^{b}$ & Logistic/RF$^{c}$ \\\\',
-            '\\midrule']
+            'Design & Inputs & CNN$^{a}$ & \\multicolumn{2}{l}{Population GNN$^{b}$} & MLP, no graph$^{b}$ & '
+            'Logistic/RF$^{c}$ \\\\', '\\cmidrule(lr){4-5}',
+            ' & & AUC & Model & AUC & AUC & AUC \\\\', '\\midrule']
     wins = {'graph': 0, 'mlp': 0, 'cls': 0}
     for t in TASKS:
-        first_t = True
+        body.append(section(TLONG[t], 7))
         for d in DESIGNS:
             first_d = True
             for i in INPUTS:
@@ -172,9 +209,9 @@ def table_main(F, C):
                     cells.append(s)
                 else:
                     cells.append('--')
-                body.append(f"{TLONG[t] if first_t else ''} & {DNAME[d] if first_d else ''} & {INAME[i]} & "
-                            f"{ref:.2f} & {g.model and MODEL[g.model]} {cells[0]} & {cells[1]} & {cells[2]} \\\\")
-                first_t = first_d = False
+                body.append(f"{DNAME[d] if first_d else ''} & {INAME[i]} & "
+                            f"{ref:.2f} & {MODEL[g.model]} & {cells[0]} & {cells[1]} & {cells[2]} \\\\")
+                first_d = False
                 num('main' + key(t, d, i), f'{g.ours:.2f}')
                 num('mlp' + key(t, d, i), f'{m.ours:.2f}')
                 num('cnn' + key(t, d, i), f'{ref:.2f}')
@@ -258,19 +295,19 @@ def table_ablation():
 def table_paired():
     P = pd.read_csv(PG / f'{MAIN}_graph_vs_mlp_paired.csv')
     M = pd.read_csv(PG / f'{MAIN}_graph_vs_mlp_matched.csv')
-    body = ['\\begin{tabular}{@{}llllllll@{}}', '\\toprule',
-            'Endpoint & Design & Inputs & Graph model & Graph AUC & MLP AUC & $\\Delta$ AUC [95\\% CI] & $p$ \\\\',
+    body = ['\\begin{tabular}{@{}lllllll@{}}', '\\toprule',
+            'Design & Inputs & Graph model & Graph AUC & MLP AUC & $\\Delta$AUC [95\\% CI] & $p$ \\\\',
             '\\midrule']
     for t in TASKS:
-        first_t = True
+        body.append(section(TLONG[t], 7))
         for d in DESIGNS:
             first_d = True
             for i in INPUTS + ['clinical']:
                 r = P[(P.task == t) & (P.design == d) & (P.inputs == i)].iloc[0]
-                body.append(f"{TLONG[t] if first_t else ''} & {DNAME[d] if first_d else ''} & {INAME[i]} & "
+                body.append(f"{DNAME[d] if first_d else ''} & {INAME[i]} & "
                             f"{MODEL[r.graph_config.split('|')[4]]} & {r.graph_test:.3f} & {r.mlp_test:.3f} & "
-                            f"{r.delta_test:+.3f} [{r.delta_lo:+.3f}, {r.delta_hi:+.3f}] & {r.p_boot:.2f} \\\\")
-                first_t = first_d = False
+                            f"{minus(f'{r.delta_test:+.3f}')} [{minus(f'{r.delta_lo:+.3f}')}, {minus(f'{r.delta_hi:+.3f}')}] & {r.p_boot:.2f} \\\\")
+                first_d = False
         if t != TASKS[-1]:
             body.append('\\midrule')
     body += ['\\botrule', '\\end{tabular}']
@@ -294,27 +331,32 @@ CLF = {'lr_C0.03': 'logistic ($C$=0.03)', 'lr_C0.3': 'logistic ($C$=0.3)', 'lr_C
 
 
 def table_configs(F, C):
-    body = ['\\begin{tabular}{@{}lllllllll@{}}', '\\toprule',
-            'Endpoint & Design & Inputs & Family & Features & Selector & $k$ & Graph & Val.\\ AUC \\\\',
+    body = ['\\begin{tabular}{@{}llllllll@{}}', '\\toprule',
+            'Design & Inputs & Model & Features & Selector & $k$ & Graph & Val.\\ AUC \\\\',
             '\\midrule']
     for t in TASKS:
+        body.append(section(TLONG[t], 8))
         for d in DESIGNS:
+            first_d = True
             for i in INPUTS + ['clinical']:
+                first_i = True
                 for fm in ('graph', 'mlp'):
                     r = F[(F.task == t) & (F.design == d) & (F.inputs == i) & (F.family == fm)].iloc[0]
                     f = r.config.split('|')
-                    body.append(f"{t} & {DNAME[d]} & {INAME[i]} & {MODEL[f[4]]} & {FSET.get(f[0], '--')} & "
+                    lead = f"{DNAME[d] if first_d else ''} & {INAME[i] if first_i else ''}"
+                    first_d = first_i = False
+                    body.append(f"{lead} & {MODEL[f[4]]} & {FSET.get(f[0], '--')} & "
                                 f"{FS.get(f[1], '--')} & {f[2] if f[2] != '0' else '--'} & "
                                 f"{'--' if f[4] == 'mlp' else f[3][1:] + '-NN'} & {r.val_auc:.3f} \\\\")
                 if C is not None and i != 'clinical':
                     c = C[(C.task == t) & (C.design == d) & (C.inputs == i)].iloc[0]
                     f = c.config.split('|')
                     if len(f) > 3:
-                        body.append(f"{t} & {DNAME[d]} & {INAME[i]} & {CLF.get(f[3], f[3])} & "
+                        body.append(f" & & {CLF.get(f[3], f[3])} & "
                                     f"{FSET.get(f[0], f[0])} & {FS.get(f[1], f[1])} & {f[2].lstrip('k')} & -- & "
                                     f"{c.val_auc:.3f} \\\\")
                     else:
-                        body.append(f"{t} & {DNAME[d]} & {INAME[i]} & logistic & {f[0].replace('+', ' + ')} only & "
+                        body.append(f" & & logistic & {f[0].replace('+', ' + ')} only & "
                                     f"-- & -- & -- & {c.val_auc:.3f} \\\\")
         if t != TASKS[-1]:
             body.append('\\midrule')
@@ -328,17 +370,22 @@ def table_seed():
         return None
     O = pd.read_csv(f)
     O = O[O.inputs != 'clinical']
-    body = ['\\begin{tabular}{@{}llllllll@{}}', '\\toprule',
-            'Endpoint & Design & Inputs & Family & Reported & Mean (SD) over re-runs & Range & Re-runs above CNN \\\\',
+    body = ['\\begin{tabular}{@{}lllllll@{}}', '\\toprule',
+            'Design & Inputs & Model & Reported & Mean (SD) & Range & Above CNN \\\\',
             '\\midrule']
     for t in TASKS:
+        body.append(section(TLONG[t], 7))
         for d in DESIGNS:
+            first_d = True
             for i in INPUTS:
+                first_i = True
                 for fm in ('graph', 'mlp'):
                     x = O[(O.task == t) & (O.design == d) & (O.inputs == i) & (O.family == fm)]
                     if not len(x):
                         continue
-                    body.append(f"{t} & {DNAME[d]} & {INAME[i]} & {'GNN' if fm == 'graph' else 'MLP'} & "
+                    lead = f"{DNAME[d] if first_d else ''} & {INAME[i] if first_i else ''}"
+                    first_d = first_i = False
+                    body.append(f"{lead} & {'Population GNN' if fm == 'graph' else 'MLP, no graph'} & "
                                 f"{x.reported.iloc[0]:.3f} & {x.ours.mean():.3f} ({x.ours.std():.3f}) & "
                                 f"{x.ours.min():.3f}--{x.ours.max():.3f} & "
                                 f"{int((x.ours > x.mateus).sum())}/{len(x)} \\\\")
@@ -533,7 +580,7 @@ def fig_ct():
         ax.set_title(f"{'Canadian centre' if coh == 'HNPET' else 'MAASTRO'}: primary {b.vol_primary / 1000:.0f} cm$^3$, "
                      f"nodal {b.vol_nodal / 1000:.0f} cm$^3$", fontsize=7.6)
     from matplotlib.patches import Patch
-    fig.legend(handles=[Patch(color=CAT[1], alpha=0.6, label='Primary GTV (main GRAFS-GAT analysis)'),
+    fig.legend(handles=[Patch(color=CAT[1], alpha=0.6, label='Primary GTV'),
                         Patch(color=CAT[0], alpha=0.6, label='Nodal GTV (added in the whole-tumour representation)')],
                loc='lower center', ncol=2, bbox_to_anchor=(0.5, -0.02))
     for ax, letter in zip(axes, 'ab'):
@@ -583,15 +630,20 @@ def fig_design():
     num('figGraphK', str(gk))
 
 
+def minus(v):
+    """Typeset a leading negative sign as a true minus (not a hyphen)."""
+    return '$-$' + v[1:] if isinstance(v, str) and v.startswith('-') and v[1:2].isdigit() else v
+
+
 def write_numbers():
-    lines = [f'\\newcommand{{\\{k}}}{{{v}}}' for k, v in sorted(NUM.items())]
+    lines = [f'\\newcommand{{\\{k}}}{{{minus(v)}}}' for k, v in sorted(NUM.items())]
     (TAB / 'numbers.tex').write_text('\n'.join(lines) + '\n')
 
 
 if __name__ == '__main__':
     F = fam(MAIN)
     C = classical_chosen()
-    table_burden()
+    table_cohort()
     table_main(F, C)
     A = table_ablation()
     table_paired()

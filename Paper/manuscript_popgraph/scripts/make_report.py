@@ -24,7 +24,7 @@ OUT = HERE / 'report'
 MD = ROOT / 'grafs-gat' / 'popgraph' / 'REPORT.md'
 
 N = dict(re.findall(r'\\newcommand\{\\(\w+)\}\{([^}]*)\}', (TAB / 'numbers.tex').read_text()))
-N = {k: v.replace('--', '–') for k, v in N.items()}
+N = {k: v.replace('--', '–').replace('$-$', '−') for k, v in N.items()}
 
 
 def T(s):
@@ -32,26 +32,42 @@ def T(s):
     return s.format(**N)
 
 
+MC = re.compile(r'\\multicolumn\{(\d+)\}\{(?:[^{}]|\{\})*\}\{(.*)\}$')
+
+
+def clean_cell(c):
+    c = c.replace('$^{a}$', 'ᵃ').replace('$^{b}$', 'ᵇ').replace('$^{c}$', 'ᶜ').replace('$^{d}$', 'ᵈ')
+    c = re.sub(r'\\textbf\{([^}]*)\}', r'\1', c)
+    c = re.sub(r'\\textit\{([^}]*)\}', r'\1', c)
+    c = c.replace('cm$^3$', 'cm³').replace('$\\Delta$', 'Δ').replace('$p$', 'p').replace('$k$', 'k')
+    c = c.replace('$-$', '−').replace('\\%', '%').replace('--', '–').replace('\\_', '_').replace('\\ ', ' ')
+    return re.sub(r'\\[a-zA-Z]+', '', c).replace('{', '').replace('}', '').replace('$', '').strip()
+
+
 def latex_rows(name):
-    """Rows of a generated LaTeX tabular as lists of plain-text cells."""
-    rows = []
+    """Rows of a generated LaTeX tabular as plain-text cells, the number of header rows, and the indices of
+    section rows (an italic label spanning the table, e.g. the endpoint)."""
+    rows, n_head, sections, in_head = [], 0, set(), False
     for line in (TAB / f'{name}.tex').read_text().splitlines():
         line = line.strip()
+        if line == '\\toprule':
+            in_head = True
+        elif line == '\\midrule':
+            in_head = False
         if not line.endswith('\\\\') or line.startswith('\\begin'):
             continue
-        if '\\multicolumn' in line or '\\cmidrule' in line:
-            continue
-        cells = [c.strip() for c in line[:-2].split('&')]
-        clean = []
-        for c in cells:
-            c = re.sub(r'\\textbf\{([^}]*)\}', r'\1', c)
-            c = c.replace('$^{a}$', 'ᵃ').replace('$^{b}$', 'ᵇ').replace('$^{c}$', 'ᶜ')
-            c = c.replace('cm$^3$', 'cm³').replace('$\\Delta$', 'Δ').replace('$p$', 'p').replace('$k$', 'k')
-            c = c.replace('\\%', '%').replace('--', '–').replace('\\_', '_').replace('\\ ', ' ')
-            c = re.sub(r'\\[a-zA-Z]+', '', c).replace('{', '').replace('}', '').replace('$', '')
-            clean.append(c)
-        rows.append(clean)
-    return rows
+        cells = []
+        for c in line[:-2].split('&'):
+            m = MC.match(c.strip())
+            if m:
+                cells += [clean_cell(m.group(2))] + [''] * (int(m.group(1)) - 1)
+            else:
+                cells.append(clean_cell(c))
+        if line.startswith('\\multicolumn') and line.count('&') == 0:
+            sections.add(len(rows))
+        rows.append(cells)
+        n_head += in_head
+    return rows, n_head, sections
 
 
 SECTIONS = [
@@ -90,7 +106,7 @@ SECTIONS = [
         'designated as the primary tumour. The whole-tumour definition describes the same anatomy in both cohorts.',
     ]),
     ('External discrimination', [
-        'Table 1 compares the chosen models with the CNN. For LR and OS the graph networks exceeded the CNN in all '
+        'Table 2 compares the chosen models with the CNN. For LR and OS the graph networks exceeded the CNN in all '
         'four settings. For DM they exceeded it in cross-validation with imaging only ({mainDMCVImg} versus '
         '{cnnDMCVImg}), were within 0.02 in two settings, and remained below it in the cohort split with clinical '
         'data ({mainDMCohClin}, 95% CI {mainCIDMCohClin}, versus {cnnDMCohClin}). A graph network on clinical '
@@ -98,14 +114,14 @@ SECTIONS = [
         '{clinOnlyOSMin}–{clinOnlyOSMax} for OS.',
     ]),
     ('Tumour definition versus tumour burden', [
-        'Table 2 shows the 2×2 ablation. Replacing primary-GTV by whole-tumour features raised the DM AUC from '
+        'Table 3 shows the 2×2 ablation. Replacing primary-GTV by whole-tumour features raised the DM AUC from '
         '{ablPrimVolDMMin}–{ablPrimVolDMMax} to {ablTotVolDMMin}–{ablTotVolDMMax} and the OS AUC from '
         '{ablPrimVolOSMin}–{ablPrimVolOSMax} to {ablTotVolOSMin}–{ablTotVolOSMax}, and left LR unchanged. '
         'Tumour-burden clinical variables helped the primary-GTV models for DM but added nothing once the nodes '
         'were part of the radiomic region.',
     ]),
     ('Does the graph help?', [
-        'Table 3 compares the chosen graph network with the chosen MLP on the same MAASTRO patients. The '
+        'Table 4 compares the chosen graph network with the chosen MLP on the same MAASTRO patients. The '
         'differences ranged from {pairedDeltaMin} to {pairedDeltaMax} AUC and only one reached nominal '
         'significance (p = {pairedMinP}), in favour of the MLP. Across all {matchedN} graph configurations, each '
         'compared with the MLP on identical features, the graph network had the higher validation AUC in '
@@ -136,19 +152,21 @@ SECTIONS = [
 ]
 
 TABLES = {
-    'External discrimination': ('table_main', 'Table 1. External AUC on MAASTRO of the whole-tumour models chosen on '
+    'External discrimination': ('table_main', 'Table 2. External AUC on MAASTRO of the whole-tumour models chosen on '
                                 'validation versus the CNN (CV: mean (range) of per-fold AUCs; cohort split: AUC '
                                 '[95% CI]). ᵃ Mateus et al.; ᵇ whole tumour with tumour-burden variables; '
                                 'ᶜ logistic regression or random forest on the same features.', 'fig_auc_vs_cnn'),
-    'Tumour definition versus tumour burden': ('table_ablation', 'Table 2. Representation ablation (external AUC of '
+    'Tumour definition versus tumour burden': ('table_ablation', 'Table 3. Representation ablation (external AUC of '
                                                'the chosen graph network; columns: LR, DM, OS × CV/cohort × '
                                                'imaging/+clinical).', 'fig_ablation'),
-    'Does the graph help?': ('table_paired', 'Table 3. Chosen graph network versus chosen MLP on MAASTRO (paired '
+    'Does the graph help?': ('table_paired', 'Table 4. Chosen graph network versus chosen MLP on MAASTRO (paired '
                              'bootstrap).', 'fig_graph_vs_mlp'),
     'Training randomness and conventional classifiers': (None, None, 'fig_seed'),
-    'Data and design': ('table_burden', 'Tumour burden by cohort (median, IQR).', 'fig_ct_tumour'),
+    'Data and design': ('table_cohort', 'Table 1. Patient characteristics, tumour delineation and outcome cohorts '
+                                        '(ᵃ CHUM, CHUS, HGJ, HMR; ᵇ external test; ᶜ patients with a nodal GTV; '
+                                        'ᵈ patients eligible per endpoint).', 'fig_ct_tumour'),
 }
-ABL_HEAD = ['Region', 'Clinical'] + [f'{t} {d} {i}' for t in ('LR', 'DM', 'OS') for d in ('CV', 'Coh')
+ABL_HEAD = ['Region', 'Clin.'] + [f'{t} {d} {i}' for t in ('LR', 'DM', 'OS') for d in ('CV', 'Coh')
                                      for i in ('Img', '+Cl')] + ['Wins']
 
 
@@ -176,21 +194,41 @@ def build_docx():
         if title in TABLES:
             name, cap, fig = TABLES[title]
             if name:
-                rows = latex_rows(name)
+                rows, n_head, sections = latex_rows(name)
                 if name == 'table_ablation':
-                    rows = [ABL_HEAD] + [r for r in rows if r and r[0] not in ('', 'Tumour region')]
+                    short = {'Primary GTV': 'Primary', 'Primary + nodal GTV': 'Whole tumour',
+                             'CNN (Mateus et al.)': 'CNN', 'T, N, volume': 'Vol.', 'T, N, burden': 'Burden'}
+                    rows = [ABL_HEAD] + [[short.get(c, c) for c in r] for r in rows[n_head:]]
+                    n_head, sections = 1, set()
                 doc.add_paragraph(cap).runs[0].bold = True
                 t = doc.add_table(rows=len(rows), cols=len(rows[0]))
                 t.style = 'Light Grid Accent 1'
                 t.alignment = WD_TABLE_ALIGNMENT.CENTER
+                t.autofit = False
+                ncol = len(rows[0])
+                body_ = [r_ for k_, r_ in enumerate(rows) if k_ >= n_head and k_ not in sections]
+                need = [7 + max([len(r_[j]) for r_ in body_ if j < len(r_)] +
+                                  [len(w) for r_ in rows[:n_head] if j < len(r_) for w in r_[j].split()] + [4])
+                        for j in range(ncol)]
+                widths = [17.4 * x / sum(need) for x in need]
+                for j, col in enumerate(t.columns):
+                    col.width = Cm(widths[j])
                 for i, r in enumerate(rows):
                     for j, c in enumerate(r[:len(rows[0])]):
                         cell = t.cell(i, j)
+                        cell.width = Cm(widths[j])
                         cell.text = c
                         for par in cell.paragraphs:
                             for run in par.runs:
                                 run.font.size = Pt(7 if len(rows[0]) > 8 else 8)
-                                run.bold = i == 0
+                                run.bold = i < n_head
+                                run.italic = i in sections
+                    if i in sections:
+                        m = t.cell(i, 0).merge(t.cell(i, len(rows[0]) - 1))
+                        for par in m.paragraphs[1:]:
+                            par._element.getparent().remove(par._element)
+                if n_head > 1:  # merge stacked header rows for Markdown
+                    rows = [[' '.join(x for x in col if x) for col in zip(*rows[:n_head])]] + rows[n_head:]
                 md += [f'**{cap}**', '', '| ' + ' | '.join(rows[0]) + ' |',
                        '|' + '---|' * len(rows[0])]
                 md += ['| ' + ' | '.join(r) + ' |' for r in rows[1:]] + ['']

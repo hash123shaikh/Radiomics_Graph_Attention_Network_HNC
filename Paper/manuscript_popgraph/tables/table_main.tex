@@ -1,20 +1,25 @@
 \begin{tabular}{@{}lllllll@{}}
 \toprule
-Endpoint & Design & Inputs & CNN$^{a}$ & Population GNN$^{b}$ & MLP, no graph$^{b}$ & Logistic/RF$^{c}$ \\
+Design & Inputs & CNN$^{a}$ & \multicolumn{2}{l}{Population GNN$^{b}$} & MLP, no graph$^{b}$ & Logistic/RF$^{c}$ \\
+\cmidrule(lr){4-5}
+ & & AUC & Model & AUC & AUC & AUC \\
 \midrule
-Locoregional recurrence & 5-fold CV & Imaging & 0.53 & GAT \textbf{0.62} (0.52--0.68) & \textbf{0.59} (0.55--0.62) & \textbf{0.58} (0.56--0.62) \\
- &  & Imaging + clinical & 0.57 & GraphSAGE \textbf{0.59} (0.53--0.65) & \textbf{0.59} (0.50--0.64) & \textbf{0.68} (0.62--0.73) \\
- & Cohort split & Imaging & 0.45 & GCN \textbf{0.63} [0.51, 0.74] & \textbf{0.64} [0.52, 0.75] & \textbf{0.54} [0.41, 0.67] \\
- &  & Imaging + clinical & 0.59 & GCN \textbf{0.60} [0.46, 0.72] & 0.58 [0.45, 0.71] & \textbf{0.75} [0.66, 0.84] \\
+\multicolumn{7}{@{}l}{\textit{Locoregional recurrence}} \\
+5-fold CV & Imaging & 0.53 & GAT & \textbf{0.62} (0.52--0.68) & \textbf{0.59} (0.55--0.62) & \textbf{0.58} (0.56--0.62) \\
+ & Imaging + clinical & 0.57 & GraphSAGE & \textbf{0.59} (0.53--0.65) & \textbf{0.59} (0.50--0.64) & \textbf{0.68} (0.62--0.73) \\
+Cohort split & Imaging & 0.45 & GCN & \textbf{0.63} [0.51, 0.74] & \textbf{0.64} [0.52, 0.75] & \textbf{0.54} [0.41, 0.67] \\
+ & Imaging + clinical & 0.59 & GCN & \textbf{0.60} [0.46, 0.72] & 0.58 [0.45, 0.71] & \textbf{0.75} [0.66, 0.84] \\
 \midrule
-Distant metastasis & 5-fold CV & Imaging & 0.83 & GCN \textbf{0.85} (0.82--0.86) & \textbf{0.85} (0.81--0.87) & \textbf{0.87} (0.84--0.89) \\
- &  & Imaging + clinical & 0.88 & GraphSAGE 0.87 (0.85--0.88) & 0.86 (0.85--0.88) & 0.86 (0.83--0.89) \\
- & Cohort split & Imaging & 0.89 & GraphSAGE 0.87 [0.71, 0.99] & 0.86 [0.70, 0.99] & 0.82 [0.63, 0.98] \\
- &  & Imaging + clinical & 0.93 & GCN 0.85 [0.68, 0.98] & 0.86 [0.71, 0.97] & 0.88 [0.74, 0.99] \\
+\multicolumn{7}{@{}l}{\textit{Distant metastasis}} \\
+5-fold CV & Imaging & 0.83 & GCN & \textbf{0.85} (0.82--0.86) & \textbf{0.85} (0.81--0.87) & \textbf{0.87} (0.84--0.89) \\
+ & Imaging + clinical & 0.88 & GraphSAGE & 0.87 (0.85--0.88) & 0.86 (0.85--0.88) & 0.86 (0.83--0.89) \\
+Cohort split & Imaging & 0.89 & GraphSAGE & 0.87 [0.71, 0.99] & 0.86 [0.70, 0.99] & 0.82 [0.63, 0.98] \\
+ & Imaging + clinical & 0.93 & GCN & 0.85 [0.68, 0.98] & 0.86 [0.71, 0.97] & 0.88 [0.74, 0.99] \\
 \midrule
-Overall survival & 5-fold CV & Imaging & 0.63 & GCN \textbf{0.73} (0.72--0.75) & \textbf{0.74} (0.74--0.75) & \textbf{0.73} (0.72--0.74) \\
- &  & Imaging + clinical & 0.68 & GCN \textbf{0.72} (0.70--0.74) & \textbf{0.72} (0.71--0.73) & \textbf{0.74} (0.74--0.75) \\
- & Cohort split & Imaging & 0.67 & GraphSAGE \textbf{0.72} [0.61, 0.82] & \textbf{0.73} [0.63, 0.83] & \textbf{0.73} [0.63, 0.82] \\
- &  & Imaging + clinical & 0.69 & GraphSAGE \textbf{0.70} [0.58, 0.80] & \textbf{0.72} [0.61, 0.81] & \textbf{0.73} [0.62, 0.82] \\
+\multicolumn{7}{@{}l}{\textit{Overall survival}} \\
+5-fold CV & Imaging & 0.63 & GCN & \textbf{0.73} (0.72--0.75) & \textbf{0.74} (0.74--0.75) & \textbf{0.73} (0.72--0.74) \\
+ & Imaging + clinical & 0.68 & GCN & \textbf{0.72} (0.70--0.74) & \textbf{0.72} (0.71--0.73) & \textbf{0.74} (0.74--0.75) \\
+Cohort split & Imaging & 0.67 & GraphSAGE & \textbf{0.72} [0.61, 0.82] & \textbf{0.73} [0.63, 0.83] & \textbf{0.73} [0.63, 0.82] \\
+ & Imaging + clinical & 0.69 & GraphSAGE & \textbf{0.70} [0.58, 0.80] & \textbf{0.72} [0.61, 0.81] & \textbf{0.73} [0.62, 0.82] \\
 \botrule
 \end{tabular}
