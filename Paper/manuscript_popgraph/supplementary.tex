@@ -12,6 +12,9 @@
 \usepackage{amsmath,amssymb}
 \usepackage{booktabs}
 \usepackage{float}
+\usepackage{longtable}
+\usepackage{array}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
 \usepackage{xcolor}
 \usepackage[font=small,labelfont=bf,skip=4pt]{caption}
 \usepackage[compact,small]{titlesec}
@@ -48,7 +51,13 @@
 \noindent\textbf{Contents}\par\vspace{4pt}
 \noindent\begin{tabular}{@{}p{0.1\linewidth}p{0.87\linewidth}@{}}
 Table S1 & Configurations of the population graph network, the MLP without edges and the conventional classifier chosen on validation for every endpoint, design and input set.\\[4pt]
-Table S2 & External AUC on MAASTRO (HN1) of the chosen graph and MLP configurations when retrained with ten disjoint ten-seed ensembles.\\
+Table S2 & External AUC on MAASTRO (HN1) of the chosen graph and MLP configurations when retrained with ten disjoint ten-seed ensembles.\\[4pt]
+Note 1 & Reporting guidelines and quality assessment.\\[4pt]
+Table S3 & TRIPOD+AI checklist.\\[4pt]
+Table S4 & CLAIM 2024 checklist.\\[4pt]
+Table S5 & CLEAR checklist.\\[4pt]
+Table S6 & METRICS self-assessment.\\[4pt]
+Table S7 & Radiomics Quality Score self-assessment.\\
 \end{tabular}
 
 \clearpage
@@ -68,4 +77,10 @@ Table S2 & External AUC on MAASTRO (HN1) of the chosen graph and MLP configurati
 \input{tables/tabS_seed}
 \end{table}
 
+\clearpage
+{\footnotesize
+\setlength{\LTcapwidth}{\linewidth}
+\renewcommand{\arraystretch}{1.12}
+\input{tables/tabS_checklists}
+}
 \end{document}
