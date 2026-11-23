@@ -125,7 +125,7 @@ Discrimination was measured by the area under the receiver operating characteris
 The development cohort comprised \nPatCan{} and the test cohort \nPatMAA{} patients with delineations; after the endpoint-specific exclusions, MAASTRO contributed \nTestLR{} patients with \eTestLR{} LR events, \nTestDM{} with \eTestDM{} DM events and \nTestOS{} with \eTestOS{} deaths. The two cohorts differed markedly in how the tumour had been delineated (Table~\ref{tab:cohort}, Fig.~\ref{fig:ct}). Separate nodal GTVs were present in \nodalPctCan\% of Canadian but \nodalPctMAA\% of MAASTRO patients, although node-positive disease was common in both, and the Canadian primary GTVs were larger (median 23.8 versus 14.1\,cm$^3$). The difference was concentrated in one centre: HGJ had separate nodal GTVs in only 12\% of its patients although 89\% were node positive, and its primary GTVs were the largest of the four centres, and several Canadian structures labelled as the primary tumour were named as tumour and nodes together. The primary GTV therefore did not describe the same anatomy in the development and test cohorts, whereas the union of the primary and nodal GTVs described the whole delineated tumour in both.
 
 \subsection{External discrimination of the whole-tumour models}
-With whole-tumour radiomic features and tumour-burden clinical variables, the population graph networks chosen on validation reached external AUCs of \mainLRMin--\mainLRMax{} for LR, \mainDMMin--\mainDMMax{} for DM and \mainOSMin--\mainOSMax{} for OS (Table~\ref{tab:main}, Fig.~\ref{fig:auc}), and exceeded the CNN of Mateus et al.\ in \winsGraph{} of the 12 settings. For LR, the graph networks exceeded the CNN in all four settings, most clearly in the cohort split with imaging only (\mainLRCohImg{} [\mainCILRCohImg] versus \cnnLRCohImg), where the CNN had performed below chance. For OS they also exceeded the CNN in all four settings, by 0.01 to 0.10, the largest difference occurring in CV with imaging only (\mainOSCVImg{} versus \cnnOSCVImg). For DM, the graph network exceeded the CNN in CV with imaging only (\mainDMCVImg{} versus \cnnDMCVImg) and was within 0.02 of it in CV with clinical data and in the cohort split with imaging only, but it remained below the CNN in the cohort split with clinical data (\mainDMCohClin{} [\mainCIDMCohClin] versus \cnnDMCohClin); the confidence interval included the CNN value, and the DM test set contained only \eTestDM{} events. A graph network on the clinical variables alone reached \clinOnlyLRMin--\clinOnlyLRMax{} for LR, \clinOnlyDMMin--\clinOnlyDMMax{} for DM and \clinOnlyOSMin--\clinOnlyOSMax{} for OS, so that the radiomic features added most for LR and DM and little for OS. The chosen configurations are listed in Supplementary Table~\ref{tab:configs}.
+With whole-tumour radiomic features and tumour-burden clinical variables, the population graph networks chosen on validation reached external AUCs of \mainLRMin--\mainLRMax{} for LR, \mainDMMin--\mainDMMax{} for DM and \mainOSMin--\mainOSMax{} for OS (Table~\ref{tab:main}, Fig.~\ref{fig:auc}), and exceeded the CNN of Mateus et al.\ in \winsGraph{} of the 12 settings. For LR, the graph networks exceeded the CNN in all four settings, most clearly in the cohort split with imaging only (\mainLRCohImg{} [\mainCILRCohImg] versus \cnnLRCohImg), where the CNN had performed below chance. For OS they also exceeded the CNN in all four settings, by 0.01 to 0.10, the largest difference occurring in CV with imaging only (\mainOSCVImg{} versus \cnnOSCVImg). For DM, the graph network exceeded the CNN in CV with imaging only (\mainDMCVImg{} versus \cnnDMCVImg) and was within 0.02 of it in CV with clinical data and in the cohort split with imaging only, but it remained below the CNN in the cohort split with clinical data (\mainDMCohClin{} [\mainCIDMCohClin] versus \cnnDMCohClin); the confidence interval included the CNN value, and the DM test set contained only \eTestDM{} events. A graph network on the clinical variables alone reached \clinOnlyLRMin--\clinOnlyLRMax{} for LR, \clinOnlyDMMin--\clinOnlyDMMax{} for DM and \clinOnlyOSMin--\clinOnlyOSMax{} for OS, so that the radiomic features added most for LR and DM and little for OS. The chosen configurations are listed in Supplementary Table~S1.
 
 \begin{table}[!htb]
 \centering
@@ -176,7 +176,7 @@ The MLP, which used the same node features and layers but no edges, exceeded the
 \end{figure}
 
 \subsection{Training randomness and conventional classifiers}
-When every chosen configuration was retrained with \seedRepeats{} disjoint ten-seed ensembles, the standard deviation of the external AUC across the re-runs had a median of \seedSDmed{} and a maximum of \seedSDmax{} (Fig.~\ref{fig:seed}, Supplementary Table~\ref{tab:seed}). The graph network exceeded the CNN in every re-run in \seedStableWins{} of the 12 settings and in none in \seedStableLoss, so that the comparison with the CNN did not depend on the seeds used for the reported models. Conventional classifiers on the same whole-tumour features, with the extended clinical set, reached external AUCs of \clsLRMin--\clsLRMax{} for LR, \clsDMMin--\clsDMMax{} for DM and \clsOSMin--\clsOSMax{} for OS and also exceeded the CNN in \winsCls{} of the 12 settings (Table~\ref{tab:main}). With imaging alone they were similar to the graph networks for DM and OS and lower for LR, but with clinical data they reached \clsLRCVClin{} and \clsLRCohClin{} for LR, well above the graph networks. This difference came from the clinical variables rather than from the radiomic features: logistic regression on these clinical variables alone, which include age, HPV status and tumour subsite in addition to T and N category, reached \clsClinLRMin--\clsClinLRMax{} for LR, \clsClinDMMin--\clsClinDMMax{} for DM and \clsClinOSMin--\clsClinOSMax{} for OS, and in the cohort split for LR the configuration chosen with clinical inputs was the clinical model with GTV volume and no texture features. The graph networks, in contrast, used the clinical variables of the CNN study, which contain neither age nor HPV status.
+When every chosen configuration was retrained with \seedRepeats{} disjoint ten-seed ensembles, the standard deviation of the external AUC across the re-runs had a median of \seedSDmed{} and a maximum of \seedSDmax{} (Fig.~\ref{fig:seed}, Supplementary Table~S2). The graph network exceeded the CNN in every re-run in \seedStableWins{} of the 12 settings and in none in \seedStableLoss, so that the comparison with the CNN did not depend on the seeds used for the reported models. Conventional classifiers on the same whole-tumour features, with the extended clinical set, reached external AUCs of \clsLRMin--\clsLRMax{} for LR, \clsDMMin--\clsDMMax{} for DM and \clsOSMin--\clsOSMax{} for OS and also exceeded the CNN in \winsCls{} of the 12 settings (Table~\ref{tab:main}). With imaging alone they were similar to the graph networks for DM and OS and lower for LR, but with clinical data they reached \clsLRCVClin{} and \clsLRCohClin{} for LR, well above the graph networks. This difference came from the clinical variables rather than from the radiomic features: logistic regression on these clinical variables alone, which include age, HPV status and tumour subsite in addition to T and N category, reached \clsClinLRMin--\clsClinLRMax{} for LR, \clsClinDMMin--\clsClinDMMax{} for DM and \clsClinOSMin--\clsClinOSMax{} for OS, and in the cohort split for LR the configuration chosen with clinical inputs was the clinical model with GTV volume and no texture features. The graph networks, in contrast, used the clinical variables of the CNN study, which contain neither age nor HPV status.
 
 \begin{figure}[!htb]
 \centering
@@ -206,7 +206,7 @@ Population graph neural networks on radiomic features of the whole tumour, the p
 %% =========================================================================================
 \section*{Declarations}
 
-\paragraph{Supplementary information.}The appendix lists the configurations chosen on validation and the results of the seed re-runs.
+\paragraph{Supplementary information.}Supplementary Information accompanies this paper: Supplementary Table~S1 lists the configurations chosen on validation and Supplementary Table~S2 the results of the seed re-runs.
 
 \paragraph{Acknowledgements.}The author thanks the investigators who made the Head-Neck-PET-CT and HN1 collections publicly available through The Cancer Imaging Archive.
 
@@ -227,26 +227,5 @@ Population graph neural networks on radiomic features of the whole tumour, the p
 \bibliographystyle{sn-nature}
 {\small\raggedright
 \bibliography{references}}
-
-%% =========================================================================================
-\clearpage
-\appendix
-\renewcommand{\thetable}{S\arabic{table}}
-\setcounter{table}{0}
-\section*{Appendix}
-
-\begin{table}[!htb]
-\centering
-\caption{Configurations chosen on validation for every endpoint, design and input set, separately for the population graph network (best of GCN, GraphSAGE and GAT), the MLP without edges and the conventional classifier (logistic regression or random forest, RF). Features: original + shape (107) or all including Laplacian-of-Gaussian features (479); $k$: number of selected radiomic features; Graph: number of training neighbours per node; Val.\ AUC: validation AUC used for the choice.}\label{tab:configs}
-\footnotesize
-\input{tables/tabS_configs}
-\end{table}
-
-\begin{table}[!htb]
-\centering
-\caption{External AUC on MAASTRO of the chosen configurations when retrained with disjoint ten-seed ensembles (seeds from 1000 onwards). Reported: AUC of the model in Table~\ref{tab:main} (seeds 0--9); SD, standard deviation over the re-runs; Above CNN: number of re-runs whose AUC exceeded that of the CNN.}\label{tab:seed}
-\small
-\input{tables/tabS_seed}
-\end{table}
 
 \end{document}
