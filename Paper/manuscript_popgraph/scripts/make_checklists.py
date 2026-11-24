@@ -2,16 +2,17 @@
 Completed reporting checklists (TRIPOD+AI, CLAIM 2024, CLEAR) and quality scores (METRICS, RQS) for the
 Supplementary Information. Locations refer to the sections, tables and figures of main.tex.
 
-  python Paper/manuscript_popgraph/scripts/make_checklists.py  ->  tables/tabS_checklists.tex
+  python Paper/manuscript_popgraph/scripts/make_checklists.py  ->  tables/tabS_checklists.tex, tables/table_reporting.tex
 """
 from pathlib import Path
 
 OUT = Path(__file__).resolve().parent.parent / 'tables' / 'tabS_checklists.tex'
+OUT_MAIN = OUT.parent / 'table_reporting.tex'
 
 # (item, topic, reported, location / comment)
 TRIPOD = [
     ('Title', None),
-    ('1', 'Title', 'Yes', 'Title (population graph neural networks, outcome prediction, head and neck cancer)'),
+    ('1', 'Title', 'Yes', 'Title (radiomics-based population graph neural networks, outcome prediction, head and neck cancer)'),
     ('Abstract', None),
     ('2', 'Abstract', 'Yes', 'Structured abstract'),
     ('Introduction', None),
@@ -126,7 +127,7 @@ CLAIM = [
 
 CLEAR = [
     ('Title, abstract and keywords', None),
-    ('1', 'Relevant title, specifying the radiomic methodology', 'Partly', 'Title names the model and task but not radiomics'),
+    ('1', 'Relevant title, specifying the radiomic methodology', 'Yes', 'Title (radiomics-based population graph neural networks)'),
     ('2', 'Structured summary with relevant information', 'Yes', 'Abstract'),
     ('3', 'Relevant keywords for radiomics', 'Yes', 'Keywords'),
     ('Introduction', None),
@@ -328,6 +329,32 @@ def main():
             'can be regenerated from the public data with the released code.\n')
     parts = [note, tri, cla, cle, '\n'.join(met), '\n'.join(rq)]
     OUT.write_text('\n\n'.join(parts) + '\n')
+
+    # summary table for the main text
+    def short(c):
+        return f"{c['Yes']} / {c['Partly']} / {c['No']} / {c['n/a']}"
+
+    summary = [
+        ('TRIPOD+AI (2024)', 'Reporting of clinical prediction models developed or validated with regression or machine learning',
+         f'{sum(ct.values())} sub-items', short(ct), 'S3'),
+        ('CLAIM 2024', 'Reporting of artificial intelligence studies in medical imaging',
+         f'{sum(cc.values())} items', short(cc), 'S4'),
+        ('CLEAR (2023)', 'Reporting of radiomics studies', f'{sum(cl.values())} items', short(cl), 'S5'),
+        ('METRICS (2024)', 'Methodological quality of radiomics research (weighted score, 0--100\\%)',
+         f'{len(METRICS)} items', f'{score:.1f}\\% ({cat})', 'S6'),
+        ('RQS (2017)', 'Methodological quality of radiomics research (points, $-$8 to 36)',
+         f'{len(RQS)} items', f'{rqs_total} of 36 ({100 * rqs_total / 36:.1f}\\%)', 'S7'),
+    ]
+    tab = ['\\begin{table}[t]', '\\centering', '\\small',
+           '\\caption{Reporting guidelines and quality tools applied to this study. For the reporting checklists, the '
+           'assessment gives the number of items reported / partly reported / not reported / not applicable; METRICS and '
+           'RQS are self-assessed scores. The completed checklists are in the Supplementary Information.}'
+           '\\label{tab:reporting}',
+           '\\begin{tabularx}{\\linewidth}{@{}l >{\\raggedright\\arraybackslash}X l l c@{}}', '\\toprule',
+           'Guideline or tool & Scope & Size & Assessment & Suppl.\\ table \\\\', '\\midrule']
+    tab += [' & '.join(r) + ' \\\\' for r in summary]
+    tab += ['\\bottomrule', '\\end{tabularx}', '\\end{table}']
+    OUT_MAIN.write_text('\n'.join(tab) + '\n')
     print(f'TRIPOD+AI {ct}\nCLAIM {cc}\nCLEAR {cl}\nMETRICS {score:.1f}% ({cat})  RQS {rqs_total}/36')
 
 
