@@ -1,0 +1,23 @@
+% Shared table style for main.tex and supplementary.tex.
+% Booktabs-type rules, no vertical lines, bold column heads, shaded group rows
+% (as in the reproducibility paper), footnotes with superscript lower-case letters (AJSE).
+% Requires xcolor with the [table] option (loaded via \PassOptionsToPackage{table}{xcolor}).
+\definecolor{tabgroup}{RGB}{221,230,241}   % group (endpoint / section) rows
+\definecolor{tabalt}{RGB}{244,246,249}     % optional zebra rows
+\providecommand{\tablebodyfont}{\small}
+\providecommand{\tablefootnotefont}{\footnotesize}
+\providecommand{\botrule}{\bottomrule}
+% \grouprow{<number of columns>}{<label>}: full-width shaded group heading
+\newcommand{\grouprow}[2]{\rowcolor{tabgroup}\multicolumn{#1}{l}{\textbf{\textit{#2}}}\\}
+% \th{<text>}: bold column heading; \sub{<text>}: indented sub-row label
+\newcommand{\tabh}[1]{\textbf{#1}}
+\newcommand{\sub}[1]{\hspace*{0.9em}#1}
+% \tabnote{...}: table footnotes beneath the table body
+\newcommand{\tabnote}[1]{\par\vspace{4pt}{\tablefootnotefont\leftskip=0pt\rightskip=0pt\parfillskip=0pt plus 1fil\noindent #1\par}}
+% column types
+\newcolumntype{J}{>{\raggedright\arraybackslash}X}
+\newcolumntype{C}{>{\centering\arraybackslash}X}
+\newcolumntype{P}[1]{>{\centering\arraybackslash}p{#1}}
+\newcolumntype{Q}[1]{>{\raggedright\arraybackslash}p{#1}}
+% common table setup: \tabsetup at the start of every table body
+\newcommand{\tabsetup}{\tablebodyfont\renewcommand{\arraystretch}{1.22}\setlength{\tabcolsep}{4pt}}

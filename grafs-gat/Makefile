@@ -39,7 +39,7 @@ export:
 	$(PY) export_results.py
 
 paper:
-	$(PY) ../Paper/manuscript/scripts/make_paper_assets.py
+	$(PY) ../Paper/grafs-gat_manuscript/scripts/make_paper_assets.py
 
 docker:
 	docker build -t grafs-gat .

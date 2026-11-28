@@ -1,0 +1,62 @@
+% Cover letter for the AJSE submission. Items in red must be completed or confirmed by the author before upload.
+\documentclass[11pt,a4paper]{article}
+\usepackage[a4paper,margin=2.3cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage[hidelinks]{hyperref}
+\newcommand{\todo}[1]{\textcolor{red}{[#1]}}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{7pt}
+\begin{document}
+
+\begin{flushright}
+Hasan Shaikh\\
+Department of Computer Science and Engineering\\
+Aligarh Muslim University, Aligarh, Uttar Pradesh 202002, India\\
+\href{mailto:hasanshaikh3198@gmail.com}{hasanshaikh3198@gmail.com}\\[4pt]
+\todo{date}
+\end{flushright}
+
+The Editor-in-Chief\\
+\emph{Arabian Journal for Science and Engineering}
+
+\textbf{Submission of an original research article: ``Graph neural networks on primary and nodal tumour radiomics for outcome prediction in head and neck cancer: a multicentre external validation study''}
+
+Dear Editor,
+
+I am pleased to submit the above manuscript for consideration as a full-length original research article in the \emph{Arabian Journal for Science and Engineering}.
+
+Recurrence and distant metastasis after radiotherapy remain common in head and neck cancer, and many deep learning and graph-based models have been proposed to predict them from planning CT. Few of these models have been tested against a published benchmark on the same patients, and graph neural networks are almost never compared with the same network without its patient graph. This study does both. Using the public protocol of a published convolutional neural network, it externally validates graph neural networks built on radiomic features of the primary and nodal tumour, separates the effect of the tumour region from that of nodal-burden clinical variables, and compares every graph model with an identical network without edges. The results show that describing the whole tumour, including the nodes, is what drives external performance, while the patient graph adds no measurable benefit. I believe these findings, and the fully released code, will interest readers working on machine learning and medical image analysis.
+
+The manuscript is original, has not been published before and is not under consideration for publication elsewhere.
+
+\textbf{Suggested reviewers}
+
+The following researchers hold a PhD, have published on radiomics, machine learning or computed tomography analysis in cancer, work at different institutions in four countries other than India, and, to my knowledge, have no conflict of interest with me and no joint research activity in the last two years.
+
+\begin{tabularx}{\linewidth}{@{}l X l@{}}
+\toprule
+Name & Department and institution & E-mail \\
+\midrule
+Dr Urszula Smyczy\'nska & Department of Biostatistics and Translational Medicine, Medical University of \L\'od\'z, \L\'od\'z, Poland & urszula.smyczynska@umed.lodz.pl \\
+Dr Vojt\v{e}ch Bystr\'y & Bioinformatics Core Facility, Central European Institute of Technology (CEITEC), Masaryk University, Brno, Czech Republic & vojtech.bystry@ceitec.muni.cz \\
+Prof.\ Jo\~ao Luiz Azevedo de Carvalho & Department of Electrical Engineering, University of Bras\'ilia, Bras\'ilia, Brazil & joaocarvalho@unb.br \\
+Prof.\ Guillermo Cabrera-Vives & Department of Computer Science, University of Concepci\'on, Concepci\'on, Chile & guillecabrera@inf.udec.cl \\
+\bottomrule
+\end{tabularx}
+
+\smallskip
+{\small Relevant work: Smyczy\'nska -- radiomics and machine learning for predicting toxicity after head and neck radiotherapy (Cancers 2021); Bystr\'y -- radiogenomic risk stratification in head and neck cancer (Eur.\ J.\ Nucl.\ Med.\ Mol.\ Imaging 2023); Carvalho -- machine learning on CT radiomics for tumour and nodal staging (Cancers 2026); Cabrera-Vives -- machine learning and computer vision, including a CT dataset with tumour and lymph-node segmentations (Sci.\ Data 2026).}
+
+Thank you for considering this manuscript. I look forward to hearing from you.
+
+Yours sincerely,\\[4pt]
+Hasan Shaikh\\
+Department of Computer Science and Engineering, Aligarh Muslim University, Aligarh, India
+
+\end{document}

@@ -1,0 +1,57 @@
+\begin{tabularx}{\linewidth}{Q{2.0cm} Q{2.6cm} Q{2.6cm} J Q{1.7cm} P{0.6cm} P{1.2cm} P{1.4cm}}
+\toprule
+\tabh{Design} & \tabh{Inputs} & \tabh{Model} & \tabh{Features} & \tabh{Selector} & \tabh{$k$} & \tabh{Graph} & \tabh{Val.\ AUC} \\
+\midrule
+\grouprow{8}{Locoregional recurrence (2 years)}
+5-fold CV & Imaging & GAT & original + shape & LASSO & 2 & 20-NN & 0.567 \\
+ &  & MLP & all (incl.\ LoG) & mRMR & 2 & -- & 0.577 \\
+ & & RF (depth 6) & original + shape & LASSO & 10 & -- & 0.637 \\
+ & Imaging + clinical & GraphSAGE & original + shape & LASSO & 4 & 5-NN & 0.638 \\
+ &  & MLP & original + shape & LASSO & 4 & -- & 0.581 \\
+ & & RF (depth 6) & original + shape & LASSO & 6 & -- & 0.753 \\
+ & Clinical & GCN & -- & -- & -- & 20-NN & 0.560 \\
+ &  & MLP & -- & -- & -- & -- & 0.535 \\
+Cohort split & Imaging & GCN & original + shape & LASSO & 2 & 20-NN & 0.559 \\
+ &  & MLP & original + shape & LASSO & 2 & -- & 0.537 \\
+ & & RF (depth 6) & original + shape & LASSO & 4 & -- & 0.609 \\
+ & Imaging + clinical & GCN & original + shape & LASSO & 4 & 10-NN & 0.592 \\
+ &  & MLP & original + shape & LASSO & 4 & -- & 0.559 \\
+ & & logistic & volume + clinical only & -- & -- & -- & 0.739 \\
+ & Clinical & GAT & -- & -- & -- & 10-NN & 0.648 \\
+ &  & MLP & -- & -- & -- & -- & 0.633 \\
+\grouprow{8}{Distant metastasis (2 years)}
+5-fold CV & Imaging & GCN & original + shape & univariate & 4 & 5-NN & 0.768 \\
+ &  & MLP & original + shape & univariate & 4 & -- & 0.777 \\
+ & & logistic ($C$=0.03) & original + shape & univariate & 15 & -- & 0.779 \\
+ & Imaging + clinical & GraphSAGE & original + shape & univariate & 4 & 20-NN & 0.793 \\
+ &  & MLP & original + shape & univariate & 4 & -- & 0.797 \\
+ & & logistic ($C$=3) & all (incl.\ LoG) & univariate & 15 & -- & 0.788 \\
+ & Clinical & GAT & -- & -- & -- & 10-NN & 0.732 \\
+ &  & MLP & -- & -- & -- & -- & 0.732 \\
+Cohort split & Imaging & GraphSAGE & all (incl.\ LoG) & LASSO & 8 & 20-NN & 0.901 \\
+ &  & MLP & all (incl.\ LoG) & LASSO & 8 & -- & 0.895 \\
+ & & logistic ($C$=3) & original + shape & mRMR & 15 & -- & 0.944 \\
+ & Imaging + clinical & GCN & all (incl.\ LoG) & LASSO & 8 & 20-NN & 0.886 \\
+ &  & MLP & all (incl.\ LoG) & LASSO & 8 & -- & 0.886 \\
+ & & logistic ($C$=0.3) & all (incl.\ LoG) & LASSO & 10 & -- & 0.896 \\
+ & Clinical & GCN & -- & -- & -- & 10-NN & 0.714 \\
+ &  & MLP & -- & -- & -- & -- & 0.681 \\
+\grouprow{8}{Overall survival (4 years)}
+5-fold CV & Imaging & GCN & all (incl.\ LoG) & LASSO & 2 & 20-NN & 0.733 \\
+ &  & MLP & original + shape & univariate & 2 & -- & 0.719 \\
+ & & logistic ($C$=3) & all (incl.\ LoG) & univariate & 4 & -- & 0.727 \\
+ & Imaging + clinical & GCN & original + shape & univariate & 2 & 5-NN & 0.719 \\
+ &  & MLP & original + shape & univariate & 2 & -- & 0.715 \\
+ & & logistic ($C$=0.03) & original + shape & univariate & 2 & -- & 0.735 \\
+ & Clinical & GAT & -- & -- & -- & 10-NN & 0.686 \\
+ &  & MLP & -- & -- & -- & -- & 0.682 \\
+Cohort split & Imaging & GraphSAGE & original + shape & LASSO & 4 & 5-NN & 0.740 \\
+ &  & MLP & original + shape & univariate & 2 & -- & 0.726 \\
+ & & RF (depth 3) & original + shape & mRMR & 10 & -- & 0.739 \\
+ & Imaging + clinical & GraphSAGE & original + shape & LASSO & 4 & 5-NN & 0.739 \\
+ &  & MLP & original + shape & LASSO & 2 & -- & 0.716 \\
+ & & logistic ($C$=0.3) & original + shape & LASSO & 6 & -- & 0.742 \\
+ & Clinical & GCN & -- & -- & -- & 5-NN & 0.670 \\
+ &  & MLP & -- & -- & -- & -- & 0.682 \\
+\botrule
+\end{tabularx}

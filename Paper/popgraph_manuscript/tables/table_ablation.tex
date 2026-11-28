@@ -1,0 +1,22 @@
+% Table 4. Representation ablation (2 x 2): tumour region x clinical variables.
+\begin{table*}[!tp]
+\centering
+\caption{Representation ablation: external AUC on HN1 of the GNN chosen on validation for each combination of radiomic tumour region and clinical variables. Values in bold exceed the CNN, whose values are taken from Mateus et al.~\cite{mateus2023}}\label{tab:ablation}
+\tabsetup\setlength{\tabcolsep}{2.6pt}
+\begin{tabularx}{\textwidth}{Q{3.0cm} Q{1.9cm} *{12}{C} P{1.0cm}}
+\toprule
+ & & \multicolumn{4}{c}{\tabh{LR (2 years)}} & \multicolumn{4}{c}{\tabh{DM (2 years)}} & \multicolumn{4}{c}{\tabh{OS (4 years)}} & \\
+\cmidrule(lr){3-6}\cmidrule(lr){7-10}\cmidrule(lr){11-14}
+ & & \multicolumn{2}{c}{\tabh{CV}} & \multicolumn{2}{c}{\tabh{Cohort}} & \multicolumn{2}{c}{\tabh{CV}} & \multicolumn{2}{c}{\tabh{Cohort}} & \multicolumn{2}{c}{\tabh{CV}} & \multicolumn{2}{c}{\tabh{Cohort}} & \\
+\cmidrule(lr){3-4}\cmidrule(lr){5-6}\cmidrule(lr){7-8}\cmidrule(lr){9-10}\cmidrule(lr){11-12}\cmidrule(lr){13-14}
+\tabh{Tumour region} & \tabh{Clinical} & \tabh{Img} & \tabh{+Cl} & \tabh{Img} & \tabh{+Cl} & \tabh{Img} & \tabh{+Cl} & \tabh{Img} & \tabh{+Cl} & \tabh{Img} & \tabh{+Cl} & \tabh{Img} & \tabh{+Cl} & \tabh{Wins}$^{a}$ \\
+\midrule
+\rowcolor{tabgroup}CNN$^{b}$ & -- & 0.53 & 0.57 & 0.45 & 0.59 & 0.83 & 0.88 & 0.89 & 0.93 & 0.63 & 0.68 & 0.67 & 0.69 & -- \\
+Primary GTV & T, N, volume & \textbf{0.61} & \textbf{0.58} & \textbf{0.63} & \textbf{0.63} & 0.65 & 0.78 & 0.70 & 0.65 & \textbf{0.67} & \textbf{0.70} & 0.65 & 0.67 & 6/12 \\
+Primary GTV & T, N, burden & \textbf{0.61} & \textbf{0.58} & \textbf{0.63} & \textbf{0.60} & 0.65 & 0.84 & 0.70 & 0.72 & \textbf{0.67} & \textbf{0.69} & 0.65 & \textbf{0.69} & 7/12 \\
+Primary + nodal GTV & T, N, volume & \textbf{0.62} & \textbf{0.58} & \textbf{0.63} & \textbf{0.61} & \textbf{0.85} & 0.88 & 0.87 & 0.86 & \textbf{0.73} & \textbf{0.72} & \textbf{0.72} & \textbf{0.72} & 9/12 \\
+Primary + nodal GTV & T, N, burden & \textbf{0.62} & \textbf{0.59} & \textbf{0.63} & \textbf{0.60} & \textbf{0.85} & 0.87 & 0.87 & 0.85 & \textbf{0.73} & \textbf{0.72} & \textbf{0.72} & \textbf{0.70} & 9/12 \\
+\botrule
+\end{tabularx}
+\tabnote{CV: mean of the per-fold AUCs; Cohort: AUC in the cohort split. Img, imaging; +Cl, imaging and clinical; volume, GTV volume in four bins; burden, volume bins of the total GTV with the logarithm of the nodal GTV volume and the number of nodal GTV structures. $^{a}$Number of the 12 settings in which the GNN exceeded the CNN. $^{b}$Mateus et al.~\cite{mateus2023}, Tables 3 and 4.}
+\end{table*}

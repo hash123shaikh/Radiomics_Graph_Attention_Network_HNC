@@ -26,13 +26,8 @@ grafs-gat/logs/
 # ---------------------------------------------------------------------------
 # Third-party material (copyright of the original authors / publishers)
 # ---------------------------------------------------------------------------
-CodeRelease/
-Paper/Mateus_reproducibilty_paper.pdf
-Paper/Graph_Feature_Selection_Technique.pdf
-Paper/Supplementary Material - Graph_Feature_Selection_Technique.docx
-Paper/Bae2025_spatial_radiomic_graphs.pdf
-Paper/appendix_&_supplementary.pdf
-Paper/Abstract_ASTRO --- GNN_predict_LR.pdf
+third_party/
+Paper/presentations/Abstract_ASTRO --- GNN_predict_LR.pdf
 
 # Personal meeting notes
 18 oct 2022-leonard wee BY AMAL.txt

@@ -124,7 +124,7 @@ HNSCC is one of the ten most common cancers worldwide. Most patients with locall
 ## 4. Study design
 
 <p align="center">
-  <img src="paper_workflow_v2/figures/fig1_study_design.png" width="100%" alt="Study design: cohorts, preprocessing, radiomics, outcomes, feature selection, graph topology, models, validation and evaluation">
+  <img src="paper_workflow/figures/fig1_study_design.png" width="100%" alt="Study design: cohorts, preprocessing, radiomics, outcomes, feature selection, graph topology, models, validation and evaluation">
 </p>
 
 ```mermaid
@@ -180,7 +180,7 @@ This gives 144 GAT configurations per endpoint for LR and DM and 128 for OS, eac
 ## 5. Model architecture
 
 <p align="center">
-  <img src="Paper/manuscript/figures/fig_architecture_author.png" width="100%" alt="Radiomic graph attention network architecture">
+  <img src="Paper/grafs-gat_manuscript/figures/fig_architecture_author.png" width="100%" alt="Radiomic graph attention network architecture">
 </p>
 
 ### How the model works
@@ -240,7 +240,7 @@ Before selection, near-constant features are removed, heavy-tailed features (|sk
 #### How Graph-FS works, and why the hybrid variant was introduced
 
 <p align="center">
-  <img src="Paper/manuscript/figures/fig_graphfs_workflow.png" width="100%" alt="Graph-based feature selection workflow">
+  <img src="Paper/grafs-gat_manuscript/figures/fig_graphfs_workflow.png" width="100%" alt="Graph-based feature selection workflow">
 </p>
 
 The figure shows the steps on real training data (fold 1, LR: 152 patients, 11 events):
@@ -257,7 +257,7 @@ The figure shows the steps on real training data (fold 1, LR: 152 patients, 11 e
 ### 6.3 Graph topologies (GTV + 20 supervoxels)
 
 <p align="center">
-  <img src="Paper/manuscript/figures/fig2_topologies.png" width="90%" alt="The four graph topologies on the CT of an external test patient">
+  <img src="Paper/grafs-gat_manuscript/figures/fig2_topologies.png" width="90%" alt="The four graph topologies on the CT of an external test patient">
 </p>
 
 | Topology | Edges | Idea it tests |
@@ -338,7 +338,7 @@ All results below come from the complete Head-Neck-PET-CT collection (298 patien
 | | Cohort split | Img+Clin | All + radiomic star | 0.73 | 0.64 [0.53, 0.74] | 0.64 [0.53, 0.75] | – | 0.66 [0.56, 0.75] | 1.00 |
 
 <p align="center">
-  <img src="Paper/manuscript/figures/fig_roc_all.png" width="100%" alt="External ROC curves">
+  <img src="Paper/grafs-gat_manuscript/figures/fig_roc_all.png" width="100%" alt="External ROC curves">
   <br><em>External ROC curves on MAASTRO. Rows: LR, DM, OS. Columns: design × inputs. The chosen GAT is shown with its 95% bootstrap band.</em>
 </p>
 
@@ -350,7 +350,7 @@ All results below come from the complete Head-Neck-PET-CT collection (298 patien
 * **Overall survival** gave the most consistent, if modest, signal: 0.62–0.66 for the chosen GATs and the reference alike, with 97% of all OS configurations above 0.5 (median 0.65).
 
 <p align="center">
-  <img src="Paper/manuscript/figures/fig5_auc_overview.png" width="85%" alt="External AUC overview">
+  <img src="Paper/grafs-gat_manuscript/figures/fig5_auc_overview.png" width="85%" alt="External AUC overview">
   <br><em>External AUC with 95% CI for every endpoint, design and input set. The dashed line marks chance (0.5).</em>
 </p>
 
@@ -384,7 +384,7 @@ CV rows: mean AUC (range) over the 5 fold models. Cohort-split rows: AUC [95% CI
 ### 7.4 Does feature selection or topology matter?
 
 <p align="center">
-  <img src="Paper/manuscript/figures/fig_heatmap.png" width="85%" alt="AUC heatmap: feature selection × topology">
+  <img src="Paper/grafs-gat_manuscript/figures/fig_heatmap.png" width="85%" alt="AUC heatmap: feature selection × topology">
   <br><em>Mean external AUC for each feature-selection strategy (rows) × topology (columns), averaged over designs and input sets. Blue = above 0.5, red = below.</em>
 </p>
 
@@ -422,7 +422,7 @@ Each GAT is compared with a random forest trained on **exactly the same GTV feat
 | OS | Cohort split | 5/8 | 0.62 | 0.63 | 0 |
 
 <p align="center">
-  <img src="Paper/manuscript/figures/fig_gat_vs_rf.png" width="85%" alt="GAT vs random forest on the same features">
+  <img src="Paper/grafs-gat_manuscript/figures/fig_gat_vs_rf.png" width="85%" alt="GAT vs random forest on the same features">
 </p>
 
 **Interpretation.** With the events available here, the peritumoral graph **added no measurable information**: the tumour-only forest was as good as, or slightly better than, the GAT for every endpoint.
@@ -442,7 +442,7 @@ Each GAT is compared with a random forest trained on **exactly the same GTV feat
 | Graph-FS (hybrid) | 0.54 | 0.50 | 0.54 | 0.27 | 0.39 | 0.27 | 0.12 | 0.12 | 0.07 |
 
 <p align="center">
-  <img src="Paper/manuscript/figures/fig6_stability.png" width="90%" alt="Feature-selection stability">
+  <img src="Paper/grafs-gat_manuscript/figures/fig6_stability.png" width="90%" alt="Feature-selection stability">
 </p>
 
 **What this shows.**
@@ -454,14 +454,14 @@ Each GAT is compared with a random forest trained on **exactly the same GTV feat
 **Why Graph-FS is so stable.** Radiomic texture features are highly inter-correlated. At the Graph-FS threshold, 87 of the 93 features form **one big community**. A few features with distinctive correlation patterns form their own small communities: first-order skewness, median and 90th percentile, GLCM informational measure of correlation and GLDM dependence variance. Spectral Graph-FS chose **exactly these five features in all five folds** for LR. LASSO, Boruta and RFE-RF instead picked a *different* member of the big correlated community in almost every fold.
 
 <p align="center">
-  <img src="Paper/manuscript/figures/fig_selection_frequency.png" width="90%" alt="Selection frequency of each feature">
+  <img src="Paper/grafs-gat_manuscript/figures/fig_selection_frequency.png" width="90%" alt="Selection frequency of each feature">
   <br><em>In how many of the 5 CV folds each feature was selected, by each strategy (LR). Graph-FS rows show solid, repeated choices; LASSO, Boruta and RFE rows are scattered.</em>
 </p>
 
 ### 7.7 Stability does not mean better prediction
 
 <p align="center">
-  <img src="Paper/manuscript/figures/fig7_stability_vs_auc.png" width="75%" alt="Stability vs external AUC">
+  <img src="Paper/grafs-gat_manuscript/figures/fig7_stability_vs_auc.png" width="75%" alt="Stability vs external AUC">
 </p>
 
 Across selectors, stability was **inversely** related to external AUC: Spearman ρ = **−0.92 for LR** and −0.74 for OS (ρ = 0.23 for DM, which rests on only 7 external events). The most stable method, spectral Graph-FS, gave the lowest mean external AUC for OS and, together with the unselected features, for LR and DM. mRMR and RFE-RF (Kuncheva ≈ 0.31 for LR) were among the most predictive. The **hybrid Graph-FS** was intermediate on both axes.
@@ -469,7 +469,7 @@ Across selectors, stability was **inversely** related to external AUC: Spearman 
 ### 7.8 Validation AUC is a poor guide to external AUC
 
 <p align="center">
-  <img src="Paper/manuscript/figures/fig8_val_vs_test.png" width="85%" alt="Validation vs external AUC">
+  <img src="Paper/grafs-gat_manuscript/figures/fig8_val_vs_test.png" width="85%" alt="Validation vs external AUC">
   <br><em>Each point is one GAT configuration. If validation were a good guide, the points would follow the diagonal.</em>
 </p>
 
@@ -486,7 +486,7 @@ Across configurations, the correlation between validation AUC and external AUC w
 * **Attention is nearly uniform.** For 98% of supervoxels, the GTV node's attention stayed within **±2.9%** of the patient mean. It showed **no dependence on distance** from the tumour and no difference between patients with and without recurrence. For the example patient below, the values ranged from 0.047 to 0.048, against a uniform value of 0.048. At this sample size, the attention maps **cannot be interpreted as showing where the risk is**.
 
 <p align="center">
-  <img src="Paper/manuscript/figures/fig_attention_ct.png" width="90%" alt="Attention on CT">
+  <img src="Paper/grafs-gat_manuscript/figures/fig_attention_ct.png" width="90%" alt="Attention on CT">
   <br><em>Attention of the GTV read-out for an external patient with locoregional recurrence. (a) Supervoxels on the CT, shaded by attention. (b) The patient graph. The near-uniform shading is the finding.</em>
 </p>
 
@@ -544,17 +544,23 @@ Across configurations, the correlation between validation AUC and external AUC w
 │       ├── stats.py, utils.py         DeLong, Holm, bootstrap CI, seeding
 │       └── viz/                       all figures and the HTML report
 ├── Paper/
-│   ├── manuscript/                    LaTeX manuscript + Supplementary Information
+│   ├── grafs-gat_manuscript/          GRAFS-GAT manuscript (LaTeX) + Supplementary Information
 │   │   ├── main.tex, supplementary.tex, references.bib
 │   │   ├── figures/, tables/          generated; numbers.tex holds every number quoted in the text
+│   │   ├── figures/source/            hand-drawn architecture figure
 │   │   └── scripts/make_paper_assets.py   regenerates all figures, tables and numbers from the results
-│   └── *.pptx, RadGAT_poster.png      figure sources, slides and poster
-├── architecture_diagram/              architecture figure
-├── paper_workflow_v2/                 study rationale, GAT explainer, implementation audit, supervoxel documentation
-└── paper_workflow/                    earlier drafts and notes
+│   ├── popgraph_manuscript/           population-graph manuscript (grafs-gat/popgraph)
+│   │   ├── main.tex, supplementary.tex, title_page.tex, cover_letter.tex
+│   │   ├── figures/, tables/, submission_figures/   figures and tables as submitted
+│   │   ├── scripts/                   make_assets.py, make_checklists.py, make_report.py
+│   │   ├── generated/                 raw output of the scripts (figures, tables, numbers.tex)
+│   │   └── report/                    study report (Word, PDF)
+│   └── presentations/                 figure sources, slides, poster and abstract
+└── paper_workflow/                    study rationale, GAT explainer, implementation audit, supervoxel documentation
+    └── archive_v1/                    original drafts and notes (May 2026)
 ```
 
-For a gentle, illustrated introduction, read the documents in [`paper_workflow_v2/`](paper_workflow_v2/):
+For a gentle, illustrated introduction, read the documents in [`paper_workflow/`](paper_workflow/):
 
 * `01`: study rationale, design and methods;
 * `02`: graph attention networks explained;

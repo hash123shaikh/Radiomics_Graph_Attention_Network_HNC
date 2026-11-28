@@ -1,0 +1,94 @@
+% Supplementary Information for main.tex (AJSE submission). Uploaded as a separate file, as required by the journal.
+% Tables use the same style as the main text (tables/tablestyle.tex).
+
+\documentclass[10pt,a4paper]{article}
+
+\usepackage[a4paper,top=2cm,bottom=2cm,left=1.8cm,right=1.8cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage[table]{xcolor}
+\usepackage[font=small,labelfont=bf,labelsep=space,skip=4pt]{caption}
+\usepackage[compact,small]{titlesec}
+\usepackage[hidelinks]{hyperref}
+
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcommand{\tablebodyfont}{\small}
+\newcommand{\tablefootnotefont}{\footnotesize}
+\input{tables/tablestyle}
+
+\graphicspath{{figures/}}
+\input{tables/numbers}
+
+\setlength{\parskip}{0pt}
+\renewcommand{\topfraction}{0.92}
+\renewcommand{\textfraction}{0.06}
+\renewcommand{\floatpagefraction}{0.85}
+
+\renewcommand{\thetable}{S\arabic{table}}
+\renewcommand{\thefigure}{S\arabic{figure}}
+
+\begin{document}
+
+\begin{center}
+{\Large\bfseries Online Resource 1}\\[4pt]
+{\normalsize Supplementary Information}\\[8pt]
+{\large\bfseries Graph neural networks on primary and nodal tumour radiomics for outcome prediction in head and neck cancer: a multicentre external validation study}\\[8pt]
+{\normalsize\itshape Arabian Journal for Science and Engineering}\\[8pt]
+{\normalsize Hasan Shaikh}\\[2pt]
+{\small Department of Computer Science and Engineering, Aligarh Muslim University, Aligarh, Uttar Pradesh 202002, India}\\[2pt]
+{\small Corresponding author: Hasan Shaikh, \href{mailto:hasanshaikh3198@gmail.com}{hasanshaikh3198@gmail.com}}
+\end{center}
+
+\vspace{4pt}
+\noindent This supplement gives the details behind the main results. Tables S1 and S2 describe the models that were selected and how stable their external performance was when they were retrained. Supplementary Note~1 and Tables S3--S7 document how the study meets the TRIPOD+AI, CLAIM 2024 and CLEAR reporting checklists and how it scores on the METRICS and RQS quality tools. Section, table and figure numbers refer to the main text.
+
+\vspace{6pt}
+\noindent\textbf{Contents}\par\vspace{4pt}
+\noindent\begin{tabular}{@{}p{0.1\linewidth}p{0.87\linewidth}@{}}
+Table S1 & Configurations of the graph neural network (GNN), the multilayer perceptron (MLP) without edges and the conventional classifier chosen on validation for every endpoint, design and input set.\\[4pt]
+Table S2 & External AUC on HN1 of the chosen GNN and MLP configurations when retrained with ten disjoint ten-seed ensembles.\\[4pt]
+Note 1 & Reporting guidelines and quality assessment.\\[4pt]
+Table S3 & TRIPOD+AI checklist.\\[4pt]
+Table S4 & CLAIM 2024 checklist.\\[4pt]
+Table S5 & CLEAR checklist.\\[4pt]
+Table S6 & METRICS self-assessment.\\[4pt]
+Table S7 & Radiomics Quality Score self-assessment.\\
+\end{tabular}
+
+\clearpage
+
+\section*{Selected configurations and seed stability}
+For every combination of endpoint, development design and input set, one configuration was selected for each model family on the validation data alone: the best graph neural network (GNN) of the GCN, GraphSAGE and GAT versions, the multilayer perceptron (MLP) with the same layers but no edges, and the best conventional classifier. Table~S1 lists these choices. In 8 of the 12 imaging settings the selected GNN and MLP used the same feature set, selector and number of features, which helps to explain why their external results in the main text are so close. Table~S2 shows what happened when each selected GNN and MLP was trained again with ten new, non-overlapping blocks of ten random seeds. The external AUC barely moved, with standard deviations of a few thousandths. Each GNN was either above the CNN in all ten re-runs or in none, so the comparisons of the GNN with the CNN do not depend on the particular seeds used. The only mixed case was the MLP for locoregional recurrence in the cohort split with clinical inputs, which was above the CNN in 2 of 10 re-runs.
+
+\begin{table}[H]
+\centering
+\caption{Configurations chosen on validation for every endpoint, design and input set, separately for the GNN (best of GCN, GraphSAGE and GAT), the MLP without edges and the conventional classifier (logistic regression or random forest, RF)}\label{tab:configs}
+\tabsetup\footnotesize
+\input{tables/tabS_configs}
+\tabnote{Features: original + shape (107) or all including Laplacian-of-Gaussian (LoG) features (479); $k$, number of selected radiomic features; Graph, number of training neighbours per node; Val.\ AUC, validation AUC used for the choice.}
+\end{table}
+
+\begin{table}[H]
+\centering
+\caption{External AUC on HN1 of the chosen configurations when retrained with disjoint ten-seed ensembles (seeds from 1000 onwards)}\label{tab:seed}
+\tabsetup
+\input{tables/tabS_seed}
+\tabnote{Reported, AUC of the model in Table~3 of the main text (seeds 0--9); SD, standard deviation over the re-runs; Above CNN, number of re-runs whose AUC exceeded that of the CNN.}
+\end{table}
+
+\clearpage
+{\footnotesize
+\setlength{\LTcapwidth}{\linewidth}
+\renewcommand{\arraystretch}{1.15}
+\input{tables/tabS_checklists}
+}
+\end{document}

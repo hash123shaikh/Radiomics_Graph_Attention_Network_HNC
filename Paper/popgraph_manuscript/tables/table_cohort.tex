@@ -1,0 +1,59 @@
+% Table 1. Patient characteristics, in the format of Table 1 of the reproducibility study.
+% Rows "Age" to "HPV status" describe the complete cohorts of Mateus et al. (298 HN-PET-CT, 137 HN1 patients);
+% the remaining rows refer to the patients analysed in this study (numbers.tex / make_assets.py).
+\begin{table*}[!tp]
+\centering
+\caption{Patient characteristics of the datasets: HN-PET-CT was used for training and internal validation and HN1 as the external test set, as in Mateus et al.~\cite{mateus2023} and in this study}\label{tab:cohort}
+\begin{minipage}{0.80\textwidth}
+\tabsetup\renewcommand{\arraystretch}{1.08}
+\begin{tabularx}{\linewidth}{J P{3.0cm} P{3.0cm}}
+\toprule
+\tabh{Characteristic} & \tabh{HN-PET-CT} & \tabh{HN1} \\
+ & \textit{public} & \textit{public} \\
+\midrule
+\tabh{Role in the study} & Training and internal validation & External test \\
+\tabh{Centres} & CHUM, CHUS, HGJ, HMR (Canada) & MAASTRO Clinic (the Netherlands) \\
+\tabh{Patients in the cohort, N} & 298 & 137 \\
+\tabh{Patients analysed in this study, N}$^{a}$ & \nPatCan & \nPatMAA \\
+\tabh{Age, median (range), years} & 63 (18--90) & 61 (44--83) \\
+\grouprow{3}{Sex, n (\%)}
+\sub{Male} & 227 (76.2\%) & 111 (81.0\%) \\
+\sub{Female} & 71 (23.8\%) & 26 (19.0\%) \\
+\grouprow{3}{Tumour site, n (\%)}
+\sub{Oropharynx} & 203 (68.1\%) & 88 (64.2\%) \\
+\sub{Larynx} & 45 (15.1\%) & 49 (35.8\%) \\
+\sub{Hypopharynx} & 13 (4.4\%) & -- \\
+\sub{Nasopharynx} & 28 (9.4\%) & -- \\
+\sub{Unknown} & 9 (3.0\%) & -- \\
+\grouprow{3}{T stage, n (\%)}
+\sub{T1} & 39 (13.1\%) & 35 (25.5\%) \\
+\sub{T2} & 109 (36.6\%) & 32 (23.4\%) \\
+\sub{T3} & 94 (31.5\%) & 24 (17.5\%) \\
+\sub{T4} & 46 (15.4\%) & 46 (33.6\%) \\
+\sub{Unknown} & 10 (3.4\%) & -- \\
+\grouprow{3}{N stage, n (\%)}
+\sub{N0} & 59 (19.8\%) & 60 (43.8\%) \\
+\sub{N1} & 40 (13.4\%) & 16 (11.7\%) \\
+\sub{N2} & 180 (60.4\%) & 58 (42.3\%) \\
+\sub{N3} & 19 (6.4\%) & 3 (2.2\%) \\
+\grouprow{3}{HPV status, n (\%)}
+\sub{Positive} & 78 (26.2\%) & 23 (16.8\%) \\
+\sub{Negative} & 46 (15.4\%) & 58 (42.3\%) \\
+\sub{Unknown} & 174 (58.4\%) & 56 (40.9\%) \\
+\grouprow{3}{Treatment, n (\%)$^{a}$}
+\sub{Concurrent chemotherapy} & 248 (84.4\%) & 37 (27.0\%) \\
+\grouprow{3}{Tumour delineation$^{a}$}
+\sub{Separate nodal GTV delineated, n (\%)} & 110 (37.4\%) & 81 (59.1\%) \\
+\sub{Primary GTV, median (IQR), cm$^3$} & 23.8 (12.0--40.8) & 14.1 (3.7--33.7) \\
+\sub{Nodal GTV$^{b}$, median (IQR), cm$^3$} & 15.7 (6.1--34.7) & 10.5 (4.9--26.4) \\
+\sub{Whole tumour, median (IQR), cm$^3$} & 31.3 (16.4--54.0) & 20.1 (6.6--52.1) \\
+\sub{Nodal share of whole tumour$^{b}$, median} & 44\% & 30\% \\
+\grouprow{3}{Events in the outcome cohorts, events / patients (\%)$^{a,c}$}
+\sub{Locoregional recurrence (LR, 2 years)} & 30 / 276 (10.9\%) & 30 / 121 (24.8\%) \\
+\sub{Distant metastasis (DM, 2 years)} & 27 / 276 (9.8\%) & 7 / 109 (6.4\%) \\
+\sub{Death (OS, 4 years)} & 44 / 164 (26.8\%) & 45 / 135 (33.3\%) \\
+\botrule
+\end{tabularx}
+\tabnote{HPV, human papillomavirus; GTV, gross tumour volume; IQR, interquartile range; OS, overall survival. Rows from age to HPV status describe the complete cohorts of Mateus et al.~\cite{mateus2023}. $^{a}$Patients analysed in this study, that is, HN-PET-CT patients with a GTV delineation who were eligible for at least one endpoint, and all HN1 patients; percentages refer to these patients. $^{b}$Among patients with a separate nodal GTV. $^{c}$Patients with an event within the horizon or event-free follow-up of at least the horizon (2 years for LR and DM, 4 years for OS).}
+\end{minipage}
+\end{table*}

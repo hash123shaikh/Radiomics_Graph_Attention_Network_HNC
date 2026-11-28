@@ -166,7 +166,11 @@ Everything is collected in `report.html` (one self-contained file).
 A second study on the same protocol: one node per **patient**, edges to the most similar *training*
 patients (inductive cosine kNN), GCN / GraphSAGE / GAT versus the identical network **without edges**
 (MLP), on radiomic features of the primary GTV or of the **whole tumour** (primary + nodal GTVs).
-Manuscript: `../Paper/manuscript_popgraph/`; summary of findings: `popgraph/REPORT.md`.
+Manuscript: `../Paper/popgraph_manuscript/`; summary of findings: `popgraph/REPORT.md`.
+
+<p align="center">
+  <img src="../Paper/popgraph_manuscript/figures/Fig2_architecture.png" width="100%" alt="Whole-tumour population-graph neural network: radiomic features, inductive patient graph, two message-passing layers, ten-seed ensemble, and the no-edge MLP control">
+</p>
 
 ```
 popgraph/total_gtv_features.py   PyRadiomics features of the primary + nodal GTV union (479 / patient)

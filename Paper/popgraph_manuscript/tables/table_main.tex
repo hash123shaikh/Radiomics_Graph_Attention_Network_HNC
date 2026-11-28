@@ -1,0 +1,30 @@
+% Table 3. External discrimination on HN1 of the whole-tumour models chosen on validation, compared with the CNN.
+\begin{table*}[!tp]
+\centering
+\caption{External discrimination on HN1 of the whole-tumour models chosen on validation, compared with the published CNN. Values in bold exceed the CNN. CNN values from Mateus et al.~\cite{mateus2023}}\label{tab:main}
+\tabsetup
+\begin{tabularx}{\textwidth}{Q{1.9cm} Q{2.6cm} P{1.2cm} Q{1.7cm} C C C}
+\toprule
+ & & \tabh{CNN}$^{a}$ & \multicolumn{2}{c}{\tabh{GNN}$^{b}$} & \tabh{MLP}$^{b}$ & \tabh{Logistic / RF}$^{c}$ \\
+\cmidrule(lr){4-5}
+\tabh{Design} & \tabh{Inputs} & \tabh{AUC} & \tabh{Model} & \tabh{AUC} & \tabh{AUC} & \tabh{AUC} \\
+\midrule
+\grouprow{7}{Locoregional recurrence (2 years)}
+5-fold CV & Imaging & 0.53 & GAT & \textbf{0.62} (0.52--0.68) & \textbf{0.59} (0.55--0.62) & \textbf{0.58} (0.56--0.62) \\
+ & Imaging + clinical & 0.57 & GraphSAGE & \textbf{0.59} (0.53--0.65) & \textbf{0.59} (0.50--0.64) & \textbf{0.68} (0.62--0.73) \\
+Cohort split & Imaging & 0.45 & GCN & \textbf{0.63} [0.51, 0.74] & \textbf{0.64} [0.52, 0.75] & \textbf{0.54} [0.41, 0.67] \\
+ & Imaging + clinical & 0.59 & GCN & \textbf{0.60} [0.46, 0.72] & 0.58 [0.45, 0.71] & \textbf{0.75} [0.66, 0.84] \\
+\grouprow{7}{Distant metastasis (2 years)}
+5-fold CV & Imaging & 0.83 & GCN & \textbf{0.85} (0.82--0.86) & \textbf{0.85} (0.81--0.87) & \textbf{0.87} (0.84--0.89) \\
+ & Imaging + clinical & 0.88 & GraphSAGE & 0.87 (0.85--0.88) & 0.86 (0.85--0.88) & 0.86 (0.83--0.89) \\
+Cohort split & Imaging & 0.89 & GraphSAGE & 0.87 [0.71, 0.99] & 0.86 [0.70, 0.99] & 0.82 [0.63, 0.98] \\
+ & Imaging + clinical & 0.93 & GCN & 0.85 [0.68, 0.98] & 0.86 [0.71, 0.97] & 0.88 [0.74, 0.99] \\
+\grouprow{7}{Overall survival (4 years)}
+5-fold CV & Imaging & 0.63 & GCN & \textbf{0.73} (0.72--0.75) & \textbf{0.74} (0.74--0.75) & \textbf{0.73} (0.72--0.74) \\
+ & Imaging + clinical & 0.68 & GCN & \textbf{0.72} (0.70--0.74) & \textbf{0.72} (0.71--0.73) & \textbf{0.74} (0.74--0.75) \\
+Cohort split & Imaging & 0.67 & GraphSAGE & \textbf{0.72} [0.61, 0.82] & \textbf{0.73} [0.63, 0.83] & \textbf{0.73} [0.63, 0.82] \\
+ & Imaging + clinical & 0.69 & GraphSAGE & \textbf{0.70} [0.58, 0.80] & \textbf{0.72} [0.61, 0.81] & \textbf{0.73} [0.62, 0.82] \\
+\botrule
+\end{tabularx}
+\tabnote{5-fold CV: mean (range) of the five per-fold AUCs; cohort split: AUC [95\% bootstrap CI]. GNN, graph neural network; MLP, multilayer perceptron; RF, random forest. $^{a}$Mateus et al.~\cite{mateus2023}, Tables 3 and 4. $^{b}$Whole-tumour features and tumour-burden clinical variables; the GNN is the best of GCN, GraphSAGE and GAT on validation, and the MLP is the same network without edges, chosen separately. $^{c}$L2-penalised logistic regression or random forest on the same whole-tumour features with the extended clinical set (age, sex, HPV status, T and N category, subsite, concurrent chemotherapy), chosen on validation.}
+\end{table*}
