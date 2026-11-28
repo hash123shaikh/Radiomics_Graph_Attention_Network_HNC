@@ -1,7 +1,0 @@
-data/
-outputs/
-outputs_archive_*/
-logs/
-**/__pycache__/
-*.pyc
-.git

@@ -1,52 +1,33 @@
-# ---------------------------------------------------------------------------
-# Patient data and patient-derived files: NEVER commit
-# ---------------------------------------------------------------------------
-grafs-gat/data/
-grafs-gat/outputs/
-grafs-gat/outputs_*/
-grafs-gat/outputs_archive_*/
-grafs-gat/logs/
+# Patient data and everything derived from it: never commit
+/data/
+/outputs/
 *.nii
 *.nii.gz
 *.dcm
-*.nrrd
-*.mha
 *.npz
 *.npy
 *.xlsx
 *.xls
+*.csv.gz
 
-# Trained model weights (attach to a GitHub Release when publishing)
+# Model weights
 *.pt
 *.pth
-*.ckpt
-*.joblib
-*.pkl
 
-# ---------------------------------------------------------------------------
-# Third-party material (copyright of the original authors / publishers)
-# ---------------------------------------------------------------------------
-third_party/
-Paper/presentations/Abstract_ASTRO --- GNN_predict_LR.pdf
+# Third-party publications (copyright of the publishers)
+/literature/
 
-# Personal meeting notes
-18 oct 2022-leonard wee BY AMAL.txt
-
-# ---------------------------------------------------------------------------
-# Build artefacts
-# ---------------------------------------------------------------------------
-Paper/GRAFS-GAT_manuscript.zip
-__pycache__/
-*.py[cod]
-.ipynb_checkpoints/
+# LaTeX build files
 *.aux
-*.bbl
-*.blg
 *.log
 *.out
+*.bbl
+*.blg
 *.synctex.gz
-*.fdb_latexmk
 *.fls
-~$*
-.~lock.*
-.DS_Store
+*.fdb_latexmk
+
+# Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/

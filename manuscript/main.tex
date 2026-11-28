@@ -1,0 +1,225 @@
+% Whole-tumour patient-similarity graph manuscript, formatted for the Arabian Journal for Science and Engineering (AJSE).
+% Springer Nature LaTeX template (sn-jnl.cls), two-column option [iicol] as requested in the AJSE author guidelines,
+% numbered references in square brackets (sn-nature.bst with natbib "numbers").
+% Every number in the text comes from tables/numbers.tex.
+
+\PassOptionsToPackage{table}{xcolor}
+\documentclass[pdflatex,iicol,sn-nature]{sn-jnl}
+
+\usepackage{graphicx}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{xcolor}
+\usepackage{textcomp}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,calc,fit,backgrounds,shapes.geometric}
+
+\graphicspath{{figures/}}
+\input{tables/numbers}
+
+%% ---------------------------------------------------------------- table style (shared with supplementary.tex)
+\input{tables/tablestyle}
+
+%% float placement: let full-width tables and figures sit close to their first citation
+\renewcommand{\topfraction}{0.95}
+\renewcommand{\dbltopfraction}{0.95}
+\renewcommand{\textfraction}{0.05}
+\renewcommand{\floatpagefraction}{0.75}
+\renewcommand{\dblfloatpagefraction}{0.75}
+\setcounter{topnumber}{3}
+\setcounter{dbltopnumber}{3}
+
+
+\begin{document}
+
+\title[Graph neural networks on primary and nodal tumour radiomics in head and neck cancer]{Graph neural networks on primary and nodal tumour radiomics for outcome prediction in head and neck cancer: a multicentre external validation study}
+
+\author*[1]{\fnm{Hasan} \sur{Shaikh}}\email{hasanshaikh3198@gmail.com}
+
+\affil*[1]{\orgdiv{Department of Computer Science and Engineering}, \orgname{Aligarh Muslim University}, \orgaddress{\city{Aligarh}, \state{Uttar Pradesh}, \postcode{202002}, \country{India}}}
+
+%% AJSE: 150--250 words, purpose, methods, results and conclusion, no undefined abbreviations, no references.
+\abstract{Graph neural networks that connect each patient to similar patients are increasingly used to predict outcomes from computed tomography (CT) radiomics, yet the graph's own contribution is seldom tested. This study compared such networks with a published convolutional neural network (CNN) for head and neck squamous cell carcinoma on its public benchmark protocol. Pretreatment CT scans of \nPatCan{} patients from four Canadian centres were used for development and \nPatMAA{} patients from a Dutch centre for external testing. Endpoints were locoregional recurrence and distant metastasis at two years and death at four years. The proposed network describes the primary and nodal tumour together and links each patient to similar patients. Graph convolutional, GraphSAGE and graph attention versions were each compared with an identical network without edges, and a factorial ablation separated tumour definition from nodal-burden clinical variables. This whole-tumour network reached external areas under the receiver operating characteristic curve of \mainLRMin--\mainLRMax{} for recurrence, \mainDMMin--\mainDMMax{} for metastasis and \mainOSMin--\mainOSMax{} for survival. It outperformed the CNN in \winsGraph{} of 12 settings, compared with \winsPrimVol{} of 12 for a primary-tumour variant, and including the nodes raised the metastasis value by up to 0.21. Removing the edges changed little: the edgeless network outperformed the CNN in \winsMLP{} of 12 settings, and only \pairedNsig{} of \pairedN{} paired differences was significant, in its favour. The gain came from describing the whole tumour, and graph-based outcome models should be reported alongside their edgeless counterpart.}
+
+%% AJSE: 4--6 keywords
+\keywords{Head and neck cancer, Radiomics, Graph neural network, Nodal tumour volume, External validation, Radiotherapy outcome prediction}
+
+\maketitle
+
+%% =========================================================================================
+\section{Introduction}\label{sec:intro}
+
+Head and neck cancer remains a major global health problem. The GLOBOCAN 2022 estimates recorded 947,211 new cases and 482,428 deaths worldwide in 2022, 4.7\% of all cancer diagnoses and 4.9\% of all cancer deaths, and if current rates persist the annual burden is projected to reach about 1.55 million new cases and 823,000 deaths by 2050~\cite{bray2024globocan,sun2025hnburden}. Most of these tumours are head and neck squamous cell carcinomas (HNSCC), and most patients present with locally advanced disease that is treated with radiotherapy, usually combined with cisplatin or preceded by surgery~\cite{johnson2020hnscc}. Treatment failure is common and tends to occur early, with most relapses seen within two years~\cite{diezfraile2022relapse}. After definitive chemoradiotherapy for T4a laryngeal cancer, 37\% of patients developed locoregional and 13\% distant recurrence~\cite{voora2022t4a}, and after postoperative chemoradiotherapy for high-risk disease, distant metastasis occurred in 28\% of patients and five-year disease-free survival was 56\%~\cite{aihara2026postop}. Human papillomavirus (HPV)-related oropharyngeal cancer behaves differently, with five-year locoregional control above 90\%~\cite{contrera2020hpv}, yet distant metastasis remains the leading cause of death in these patients~\cite{sadeghi2025nectors}. The public cohorts analysed here show the same pattern: within two years, 11--25\% of patients had locoregional recurrence (LR) and 6--10\% distant metastasis (DM), and 27--33\% had died within four years (Table~\ref{tab:cohort}).
+
+This variation in risk is the clinical problem that outcome prediction addresses. Patients at high risk of locoregional failure may benefit from dose escalation or adjuvant therapy, patients at high risk of distant failure from more effective systemic treatment, and patients at low risk from de-escalation that spares them long-term toxicity. Recent de-escalation trials, however, have shown that modifying standard treatment without reliable patient selection can compromise survival~\cite{beddok2025proton}. Follow-up does not solve the problem either, because routine clinical examination and imaging detect recurrence late and have not clearly improved survival~\cite{diezfraile2022relapse}. A reliable estimate, made before treatment, of each patient's risk of LR, DM and death (overall survival, OS), based on images already acquired for radiotherapy planning, would therefore help clinicians decide when to intensify or de-escalate treatment. Radiomic and deep learning models based on computed tomography (CT) have been developed for this purpose~\cite{aerts2014,vallieres2017,diamant2019,kazmierski2023}, but their reported performance is often hard to reproduce. Mateus et al.~\cite{mateus2023} retrained a published convolutional neural network (CNN) on the public Head-Neck-PET-CT (HN-PET-CT) collection and tested it on the HN1 collection from MAASTRO Clinic. The discrimination they obtained depended heavily on the validation design and on how the training checkpoint was chosen. Their work also left behind something useful: a public protocol, with two development designs and three endpoints, on which other methods can be tested using exactly the same patients.
+
+With only a few hundred patients available, graph neural networks (GNNs) are an appealing alternative to CNNs. In a patient-similarity graph, every patient is a node carrying imaging and clinical features, and edges join patients who resemble one another. A graph convolutional network (GCN), GraphSAGE or graph attention network (GAT) then predicts the outcome of each patient from that patient's features and those of the neighbours~\cite{parisot2018population,kipf2017gcn,hamilton2017graphsage,velickovic2018gat}. This approach has improved disease classification in neuroimaging~\cite{parisot2018population} and outcome prediction from CT radiomics in COVID-19 pneumonia~\cite{keicher2023covid}. Few studies, however, have asked whether the graph contributes anything beyond the node features, because the same network without edges is rarely reported as a comparator.
+
+A second issue concerns the tumour region. Radiomic models for these endpoints are usually built on the primary gross tumour volume (GTV)~\cite{aerts2014,vallieres2017}. The images used to train the CNN of Mateus et al., by contrast, show the involved lymph nodes as well as the primary tumour, and nodal burden and total tumour volume are known risk factors for distant failure~\cite{kjems2023volume,jensen2020nodalfdg}. A comparison between a primary-GTV radiomic model and an image-based network is therefore not a like-for-like comparison. It is also unclear whether the delineations in public multicentre collections follow the same conventions in the development and test cohorts.
+
+This study proposes a GNN that describes each patient by radiomic features of the whole tumour, the primary and nodal GTVs together, and connects patients with similar features. The protocol of Mateus et al. was used to address three questions. Can this whole-tumour GNN match the external discrimination of the published CNN for LR, DM and OS? How much of any gain over a primary-GTV model comes from the tumour definition, and how much from nodal burden entered as a clinical variable? And does the patient-similarity graph add anything once the same network is trained without edges, conventional classifiers are fitted to the same features and training is repeated with different seeds? To answer the last question, every graph model was matched with its edgeless counterpart, a comparison that is rarely made for radiomic outcome models.
+
+%% =========================================================================================
+\section{Experimental Methods}\label{sec:methods}
+
+\subsection{Study Design, Cohorts and Endpoints}\label{sec:design}
+This retrospective study used de-identified public data from The Cancer Imaging Archive. No protocol was prepared or registered in advance. The development cohort consisted of \nPatCan{} patients with pretreatment CT and delineations from the four Canadian centres of the HN-PET-CT collection: Centre hospitalier de l'Universit\'e de Montr\'eal (CHUM), Centre hospitalier universitaire de Sherbrooke (CHUS), H\^opital g\'en\'eral juif, Montr\'eal (HGJ) and H\^opital Maisonneuve-Rosemont, Montr\'eal (HMR)~\cite{vallieres2017,vallieres2017tcia}. The external test cohort consisted of \nPatMAA{} patients from the HN1 collection, treated at MAASTRO Clinic, Maastricht, the Netherlands~\cite{aerts2014,wee2019hn1}. Endpoints, follow-up horizons and exclusions followed Mateus et al.~\cite{mateus2023}. LR and DM were assessed at two years and death at four years. Each was treated as a binary outcome, and a patient was eligible if the event occurred within the horizon or follow-up extended beyond it.
+
+The two development designs of the CNN study were reproduced exactly. The first was stratified 5-fold cross-validation (CV) on the Canadian patients. The second was a cohort split, with HGJ and CHUS used for training and HMR and CHUM for validation~\cite{diamant2019,mateus2023}. In both designs, every data-dependent step was fitted on the training patients only and models were selected on validation data. HN1 outcomes were never used for training or model selection. The folds and the cohort split were fixed beforehand and shared by all models. Both collections have been used in earlier studies, including the CNN study used here as the benchmark~\cite{vallieres2017,diamant2019,mateus2023,kazmierski2023}. Sample size was set by the public collections, and no formal calculation was made. Table~\ref{tab:cohort} describes the two cohorts.
+
+\input{tables/table_cohort}
+
+\subsection{Tumour Definition, Radiomic Features and Clinical Variables}\label{sec:features}
+The images were the pretreatment scans supplied with the collections: the CT component of the $^{18}$F-fluorodeoxyglucose positron emission tomography/CT (FDG PET/CT) at the Canadian centres and the radiotherapy planning CT at MAASTRO. They were acquired with the centre-specific protocols described in the collection reports~\cite{vallieres2017,aerts2014}, and apart from resampling no harmonisation was applied. The delineations were the radiotherapy GTVs drawn by radiation oncologists at each centre. They were used as supplied. Because each patient had only one delineation, segmentation reliability could not be assessed.
+
+Two tumour definitions were compared (Fig.~\ref{fig:ct}). The primary GTV was the structure listed as the primary tumour in the HN-PET-CT delineation index, or GTV-1 in HN1. The whole tumour was the union of the primary GTV and all nodal GTVs, namely the structures listed as nodal GTVs in the HN-PET-CT index and GTV-2 to GTV-$n$ in HN1. Images were resampled to 1\,mm isotropic voxels (linear interpolation for CT, nearest neighbour for masks) and cropped to the mask with a 10\,mm margin. PyRadiomics~\cite{vangriethuysen2017} was then used to extract 479 three-dimensional features with a bin width of 25 Hounsfield units (HU). These comprised 14 shape features, 93 first-order and texture features from the original image, and the same 93 features after Laplacian-of-Gaussian (LoG) filtering with $\sigma$ of 1, 2, 3 and 5\,mm. Other PyRadiomics settings were left at their defaults, and the same settings were used for the primary GTV. For every patient, the primary, nodal and total GTV volumes and the number of nodal structures were also recorded.
+
+The clinical variables were the ones used by the CNN with clinical data~\cite{mateus2023}: T category (T1--T4), N category (N0, N1, N2 or higher) and GTV volume in four bins (cut-offs 11, 24 and 43\,cm$^3$). They were tested in two forms. In the first, the volume bins came from the GTV used for the radiomic features. In the second, referred to as tumour burden, the bins came from the total GTV, and two variables were added: the logarithm of the nodal GTV volume and the number of nodal structures, capped at four. A missing categorical value was coded by setting all indicators of that variable to zero.
+
+\begin{figure*}[!tp]
+\centering
+\includegraphics[width=0.92\textwidth]{Fig1.pdf}
+\caption{Tumour definitions on pretreatment CT. Axial slices of one HN-PET-CT (\textbf{a}) and one HN1 (\textbf{b}) patient showing the primary GTV (orange), used alone in the primary-GTV representation, and the nodal GTVs (blue), added in the whole-tumour representation. Volumes refer to the complete structures. Images from the HN-PET-CT and HN1 collections~\cite{vallieres2017tcia,wee2019hn1}}\label{fig:ct}
+\end{figure*}
+
+\subsection{Whole-Tumour Graph Neural Network}\label{sec:gnn}
+The proposed model combines the whole-tumour radiomic features of Section~\ref{sec:features} with a patient-similarity graph (Fig.~\ref{fig:arch}). The same networks trained on primary-GTV features are referred to as the primary-GTV variant.
+
+\begin{figure*}[!tp]
+\centering
+\resizebox{\textwidth}{!}{\input{figures/Fig2}}
+\caption{Overview of the whole-tumour GNN. (1) Radiomic features are extracted from the whole tumour, the union of the primary GTV (orange) and nodal GTVs (blue), shown on an HN1 planning CT; a selector fitted on training data keeps 2, 4 or 8 features, optionally joined with clinical variables. (2) Each patient becomes a node that receives edges from its most similar training patients; test patients receive edges but send none. (3) Two message-passing layers update each patient's representation from its own features and those of its neighbours (inset), with a residual connection and a linear skip from the input. (4) A sigmoid output gives the probability of each event, averaged over ten seeds and evaluated on HN1 by the area under the receiver operating characteristic curve (AUC). Bottom: the validation design and the no-edge control, an identical multilayer perceptron (MLP) that ignores the graph. Bar lengths in (4) are illustrative. CT image from the HN1 collection~\cite{wee2019hn1}}\label{fig:arch}
+\end{figure*}
+
+
+In each split, all training, validation and test patients were placed in a single patient-similarity graph (Fig.~\ref{fig:arch}, panel 2). The node features were the radiomic features chosen by a selector fitted on the training patients, with or without the clinical variables. Using training statistics only, features were median-imputed, log-transformed if strongly skewed (absolute skewness above 2), standardised and clipped at $\pm5$ standard deviations. Edges were built inductively. Each node received directed edges from its $k$ most similar training patients, measured by cosine similarity, and training nodes did not receive edges from themselves. Validation and test patients sent no edges, so their predictions depended only on their own features and those of training patients, and their labels could not reach any other node.
+
+Three GNNs were tested: a GCN~\cite{kipf2017gcn}, GraphSAGE~\cite{hamilton2017graphsage} and a four-head GAT~\cite{velickovic2018gat}. All had two message-passing layers of 32 hidden units with exponential linear units (ELU), a linear skip connection from the input, a residual connection between layers, input dropout of 0.2, hidden dropout of 0.5 and a linear output layer, with the default initialisation of PyTorch Geometric. As a control, both message-passing layers were replaced by linear layers. The result is a multilayer perceptron (MLP) that sees the same node features as the GNN but no edges. All networks were trained full-batch for 150 epochs with Adam (learning rate $5\times10^{-3}$, weight decay $5\times10^{-3}$) and a binary cross-entropy loss weighted by the inverse class ratio of the training patients. Each configuration was trained with ten seeds (0--9), and the predicted probabilities were averaged.
+
+The configuration grid was searched separately for each endpoint, design and input set. It covered two feature sets (107 original and shape features, or all 479 features); three selectors fitted on the training patients, namely minimum-redundancy maximum-relevance (mRMR)~\cite{peng2005mrmr}, the least absolute shrinkage and selection operator (LASSO)~\cite{tibshirani1996lasso} and a univariate filter that ranked features by training AUC and removed any feature correlated at $|r|\geq0.8$ with a higher-ranked one; three subset sizes ($k=2$, 4 and 8); three neighbourhood sizes (5, 10 and 20 training neighbours); and the three GNN architectures. This gave 162 graph and 18 MLP configurations per input set. As in the CNN study, imaging-only and imaging-plus-clinical inputs were analysed separately, and a graph using clinical variables alone was trained for reference. The configuration with the highest validation AUC was selected separately for the GNNs and for the MLP, using pooled out-of-fold predictions in CV and the validation centres in the cohort split. The two selected models were then compared on HN1. In addition, every graph configuration was compared with the MLP that used the same feature set, selector, subset size and inputs.
+
+\subsection{Comparator Models and Representation Ablation}\label{sec:cls}
+Conventional classifiers were trained on the same whole-tumour features and splits for comparison. The grid covered three feature sets (original, original and shape, all), the same three selectors, five subset sizes ($k=2$, 4, 6, 10 and 15) and five classifiers: L2-penalised logistic regression with $C=0.03$, 0.3 or 3, and random forests (RF) of 500 trees with a maximum depth of 3 or 6, all with balanced class weights~\cite{pedregosa2011sklearn,breiman2001rf}. Each was trained with and without an extended clinical set made up of age, sex, human papillomavirus (HPV) status, T and N category, tumour subsite and concurrent chemotherapy. HPV status was coded as positive, negative or unknown, and missing ages were replaced by the training median. Logistic regression ($C=0.3$) on GTV volume alone, on the clinical variables alone and on both was added as a reference. Selection followed the same rule as for the networks.
+
+To separate the effect of the tumour definition from that of tumour burden, the full grid was rerun in a $2\times2$ ablation crossing the radiomic region (primary GTV or whole tumour) with the clinical variables (volume bins only, or tumour burden). The whole-tumour representation was proposed because the CNN input contains the nodes, but it was introduced after the primary-GTV results were known. For this reason all four representations are reported, not only the best one.
+
+\subsection{Statistical Analysis and Reporting}\label{sec:stats}
+Discrimination was measured with the area under the receiver operating characteristic curve (AUC). External results follow the format of Mateus et al.~\cite{mateus2023}. For CV, the mean and range of the five per-fold HN1 AUCs are given. For the cohort split, the HN1 AUC is given with a 95\% percentile bootstrap confidence interval (CI; 1000 resamples)~\cite{efron1993}. CNN values were taken from Tables 3 (imaging) and 4 (with clinical data) of that report. Its predictions are not public, so the comparison with the CNN is descriptive. The selected GNN and MLP were compared on HN1 with a paired patient-level bootstrap of the AUC difference (2000 resamples), after averaging the five fold models in CV. To measure the effect of training randomness, each selected configuration was retrained with ten further, non-overlapping blocks of ten seeds (seeds 1000 onwards), and the spread of the external AUC across these re-runs was recorded. All analyses were run in Python 3.8 with PyRadiomics 3.0.1~\cite{vangriethuysen2017}, PyTorch 2.0.1~\cite{paszke2019pytorch}, PyTorch Geometric 2.3.1~\cite{fey2019pyg} and scikit-learn 1.3.0~\cite{pedregosa2011sklearn}.
+
+Reporting follows the Transparent Reporting of a multivariable prediction model for Individual Prognosis Or Diagnosis statement for artificial intelligence (TRIPOD+AI)~\cite{collins2024tripodai}, the Checklist for Artificial Intelligence in Medical Imaging (CLAIM 2024)~\cite{tejani2024claim} and the CheckList for EvaluAtion of Radiomics research (CLEAR)~\cite{kocak2023clear}. Methodological quality was self-assessed with the METhodological RadiomICs Score (METRICS)~\cite{kocak2024metrics} and the Radiomics Quality Score (RQS)~\cite{lambin2017rqs}. The results are summarised in Table~\ref{tab:reporting}, and the completed checklists are given in Tables S3--S7 of Online Resource~1. Most unmet items concern calibration and clinical utility, which were outside the scope of a discrimination benchmark, delineation reliability and imaging protocol details, which are limited by the public collections, and release of feature data and trained models, which can be regenerated from the public data with the released code.
+
+A large language model (Claude, Anthropic) was used during manuscript preparation to restructure and edit the text to the journal format, to search for and check bibliographic records, and to draw the schematic in Fig.~\ref{fig:arch} from the released code. It was not used to generate, analyse or interpret data. The author checked all text, numbers, references and figures against the analysis outputs and takes full responsibility for the content of this article.
+
+\input{tables/table_reporting}
+
+%% =========================================================================================
+\section{Results}\label{sec:results}
+
+\subsection{Cohort Characteristics and Tumour Delineation}\label{sec:res-cohort}
+The two cohorts are described in Table~\ref{tab:cohort}. After endpoint-specific exclusions, the HN1 test cohort included \nTestLR{} patients with \eTestLR{} LR events, \nTestDM{} patients with \eTestDM{} DM events and \nTestOS{} patients with \eTestOS{} deaths. The way the tumour had been delineated differed considerably between the cohorts (Fig.~\ref{fig:ct}). Separate nodal GTVs were drawn in \nodalPctCan\% of HN-PET-CT patients but in \nodalPctMAA\% of HN1 patients, although node-positive disease was common in both. Primary GTVs were also larger in HN-PET-CT (median 23.8 versus 14.1\,cm$^3$). Most of this difference came from one centre. At HGJ, only 12\% of patients had a separate nodal GTV although 89\% were node positive, the primary GTVs were the largest of the four centres, and several structures labelled as the primary tumour were named as tumour and nodes together. In practice, then, the primary GTV did not cover the same anatomy in the development and test cohorts. The union of primary and nodal GTVs did, because it includes all delineated tumour regardless of how it was subdivided.
+
+\subsection{External Discrimination of the Whole-Tumour GNN}\label{sec:res-main}
+Table~\ref{tab:main} and Fig.~\ref{fig:auc} show how the models selected on validation performed on HN1. Using whole-tumour features and tumour-burden clinical variables, the GNNs reached external AUCs of \mainLRMin--\mainLRMax{} for LR, \mainDMMin--\mainDMMax{} for DM and \mainOSMin--\mainOSMax{} for OS, and they outperformed the CNN in \winsGraph{} of the 12 endpoint, design and input settings.
+
+For LR, the GNNs were better than the CNN in all four settings. The largest gap was in the cohort split with imaging only (\mainLRCohImg{} [\mainCILRCohImg] versus \cnnLRCohImg), where the CNN had been below chance. For OS, the GNNs were also better in all four settings, by 0.01 to 0.10, with the largest difference in CV with imaging only (\mainOSCVImg{} versus \cnnOSCVImg). DM was the exception. The GNN was better in CV with imaging only (\mainDMCVImg{} versus \cnnDMCVImg) and within 0.02 of the CNN in two other settings, but it fell short in the cohort split with clinical data (\mainDMCohClin{} [\mainCIDMCohClin] versus \cnnDMCohClin). That interval contained the CNN value, and the DM test set had only \eTestDM{} events. A GNN using clinical variables alone reached \clinOnlyLRMin--\clinOnlyLRMax{} for LR, \clinOnlyDMMin--\clinOnlyDMMax{} for DM and \clinOnlyOSMin--\clinOnlyOSMax{} for OS. The radiomic features thus added most for LR and DM and relatively little for OS. Table S1 in Online Resource~1 lists the selected configurations.
+
+\input{tables/table_main}
+
+\begin{figure*}[!tp]
+\centering
+\includegraphics[width=0.92\textwidth]{Fig3.pdf}
+\caption{External AUC on HN1 of the whole-tumour GNN (circles; CV: range of per-fold AUCs; cohort split: 95\% bootstrap CI) and of the MLP without edges (squares), both using whole-tumour features and selected on validation, compared with the published CNN (diamonds)~\cite{mateus2023}. The dashed line marks chance. CNN values from Mateus et al.~\cite{mateus2023}}\label{fig:auc}
+\end{figure*}
+
+\subsection{Tumour Definition Versus Tumour Burden}\label{sec:res-ablation}
+The $2\times2$ ablation in Table~\ref{tab:ablation} and Fig.~\ref{fig:ablation} separates the two changes. With primary-GTV features, the GNNs outperformed the CNN in \winsPrimVol{} of 12 settings with volume bins and in \winsPrimBur{} of 12 with tumour-burden variables, and for DM they were 0.04 to 0.28 below the CNN in every setting. With whole-tumour features, the corresponding figures were \winsTotVol{} and \winsTotBur{} of 12.
+
+Most of the improvement came from the tumour definition. Moving from the primary GTV to the whole tumour raised the DM AUC from \ablPrimVolDMMin--\ablPrimVolDMMax{} to \ablTotVolDMMin--\ablTotVolDMMax{} and the OS AUC from \ablPrimVolOSMin--\ablPrimVolOSMax{} to \ablTotVolOSMin--\ablTotVolOSMax, while LR hardly changed (\ablPrimVolLRMin--\ablPrimVolLRMax{} and \ablTotVolLRMin--\ablTotVolLRMax). Tumour-burden variables did help the primary-GTV models for DM when combined with imaging, raising the best value from \ablPrimVolDMMax{} to \ablPrimBurDMMax. Nodal burden clearly carries information about distant failure. Once the nodes were part of the radiomic region, however, the extra burden variables made no further difference.
+
+\input{tables/table_ablation}
+
+\begin{figure*}[!tp]
+\centering
+\includegraphics[width=0.92\textwidth]{Fig4.pdf}
+\caption{Difference between the external AUC of the selected GNN and that of the CNN~\cite{mateus2023} for each combination of radiomic region (rows: primary GTV, or primary and nodal GTV) and clinical variables (volume bins or tumour burden), endpoint, design (CV; Coh, cohort split) and inputs (Img, imaging; +Cl, imaging and clinical). Blue: above the CNN; red: below. CNN values from Mateus et al.~\cite{mateus2023}}\label{fig:ablation}
+\end{figure*}
+
+\subsection{Contribution of the Patient-Similarity Graph}\label{sec:res-graph}
+The MLP, which had the same node features and layers as the GNN but no edges, outperformed the CNN in \winsMLP{} of the 12 settings, one fewer than the GNNs (Table~\ref{tab:main}). The paired comparison in Table~\ref{tab:paired} shows that the external AUCs of the selected GNN and MLP differed by between \pairedDeltaMin{} and \pairedDeltaMax{} across the \pairedN{} endpoint, design and input combinations, including the clinical-only models. Only one difference reached nominal significance ($p=\pairedMinP$), and it favoured the MLP.
+
+The matched comparison pointed the same way (Fig.~\ref{fig:matched}). Each of the \matchedN{} graph configurations was compared with the MLP that used exactly the same features. The GNN had the higher validation AUC in \matchedValFracAll\% of these pairs and the higher external AUC in \matchedTestFracAll\%, with a median external difference of \matchedTestMedAll. The graph did least harm for LR, where the GNN was better on HN1 in \matchedTestFracLR\% of pairs, and most harm for OS (\matchedTestFracOS\%). The advantage over the CNN came from the node features, and the edges did not add to it.
+
+\input{tables/table_paired}
+
+\begin{figure*}[!tp]
+\centering
+\includegraphics[width=0.92\textwidth]{Fig5.pdf}
+\caption{Matched comparison of every graph configuration with the MLP using identical features (feature set, selector, subset size and inputs), on validation (left) and on HN1 (right), by endpoint and GNN architecture. Values above zero favour the graph. Horizontal lines inside the violins mark medians}\label{fig:matched}
+\end{figure*}
+
+\subsection{Training Randomness and Conventional Classifiers}\label{sec:res-seed}
+Retraining each selected configuration with \seedRepeats{} non-overlapping ten-seed ensembles changed the external AUC very little. The standard deviation (SD) across re-runs had a median of \seedSDmed{} and a maximum of \seedSDmax{} (Fig.~\ref{fig:seed}, Table S2 in Online Resource~1). The GNN beat the CNN in every re-run in \seedStableWins{} of the 12 settings and in none of the re-runs in the other \seedStableLoss. The comparison with the CNN did not depend on the seeds chosen for the reported models.
+
+Conventional classifiers trained on the same whole-tumour features with the extended clinical set reached external AUCs of \clsLRMin--\clsLRMax{} for LR, \clsDMMin--\clsDMMax{} for DM and \clsOSMin--\clsOSMax{} for OS, and they too outperformed the CNN in \winsCls{} of the 12 settings (Table~\ref{tab:main}). With imaging alone, they performed similarly to the GNNs for DM and OS and worse for LR. With clinical data added, they reached \clsLRCVClin{} and \clsLRCohClin{} for LR, well above the GNNs. The clinical variables, not the radiomic features, accounted for this difference. Logistic regression on these clinical variables alone, which include age, HPV status and tumour subsite as well as T and N category, reached \clsClinLRMin--\clsClinLRMax{} for LR, \clsClinDMMin--\clsClinDMMax{} for DM and \clsClinOSMin--\clsClinOSMax{} for OS. In the cohort split for LR, the model selected with clinical inputs was in fact the clinical model with GTV volume and no texture features. The GNNs used only the clinical variables of the CNN study, which include neither age nor HPV status.
+
+\begin{figure*}[!tp]
+\centering
+\includegraphics[width=0.92\textwidth]{Fig6.pdf}
+\caption{External AUC on HN1 of the selected GNNs (blue) and MLPs (green) after retraining with non-overlapping ten-seed ensembles, by endpoint, design (CV; Coh, cohort split) and inputs (Img, imaging; +Cl, imaging and clinical). Black bars: reported models (seeds 0--9); red lines: CNN~\cite{mateus2023}}\label{fig:seed}
+\end{figure*}
+
+%% =========================================================================================
+\section{Discussion}\label{sec:discussion}
+On the public protocol of Mateus et al., GNNs built on radiomic features of the whole tumour matched or exceeded the published CNN for LR and OS and came close to it for DM. The same networks built on the primary GTV fell well short for DM. The ablation traced this gap to the tumour definition rather than to tumour burden entered as a clinical variable. The no-edge comparison showed that the patient-similarity graph itself contributed nothing measurable. The MLP reached the same external discrimination, the paired differences were small and went in both directions, and with identical features the GNN was worse more often than it was better.
+
+Why should the tumour definition matter so much? Two explanations fit the data. The first is biological. Nodal disease and total tumour volume are among the strongest predictors of distant metastasis in HNSCC~\cite{kjems2023volume,jensen2020nodalfdg}. A radiomic description of the primary tumour cannot capture them, whereas the CNN, which saw the whole image, could. The second is a measurement problem. Separate nodal GTVs were drawn in \nodalPctCan\% of HN-PET-CT patients but \nodalPctMAA\% of HN1 patients, and at one Canadian centre nodal disease seems to have been included in the structure labelled as the primary GTV. A model trained on the primary GTV thus learnt from a structure that sometimes contained nodes and was tested on one that usually did not, and part of its DM signal could not transfer. Using the union of all GTVs removes this mismatch, because the whole delineated tumour is described the same way however it was subdivided. These data cannot fully separate the two explanations. Both, however, point to the same practical advice. Radiomic models compared with image-based deep learning should use the tumour region that the network sees, and delineation conventions in public cohorts should be checked before features are compared across them.
+
+The negative result for the graph is consistent with earlier work on patient-similarity graphs. The gains reported in neuroimaging and COVID-19 pneumonia were obtained with richer non-imaging data defining the edges, and they were seldom tested against an equally tuned network without edges~\cite{parisot2018population,keicher2023covid}. In this study, the edges were defined by the same features as the nodes. Message passing could only pull each patient's prediction towards those of similar training patients, which an MLP on the same features can largely reproduce. With a few hundred patients and a handful of selected features, this smoothing adds no information that the features do not already hold. Without the no-edge control, the conclusion would have been different: the GNNs did outperform the CNN in \winsGraph{} of 12 settings, and on its own this result could easily have been credited to the graph. Studies of graph-based outcome models should therefore routinely report the same network trained without edges.
+
+The conventional classifiers support this reading. On the same whole-tumour features, logistic regression and random forests matched the GNNs, which again places the gain in the features. For LR, a fuller clinical description that included age and HPV status outperformed every imaging model and the CNN. The comparison with the CNN was intentionally limited to the clinical variables the CNN had used, so that both approaches received the same information. It should not be taken to mean that imaging adds to a complete clinical model for LR, and these data do not suggest that it does. Training randomness did not change any of these conclusions. Every configuration was a ten-seed ensemble, and re-runs with fresh seeds varied by a few thousandths of an AUC at most. For CT radiomics in HNSCC cohorts of this size, what is measured appears to matter more than the architecture used to combine the measurements.
+
+This study has several limitations. The whole-tumour representation was introduced after the primary-GTV results had been seen, so the HN1 data were used more than once. This risk was reduced by the prior rationale (the CNN input contains the nodes), by selecting every model on validation data and by reporting all four ablation representations, but the whole-tumour results still need confirmation in an independent cohort. The DM test set had only \eTestDM{} events, which makes the DM AUCs imprecise and leaves differences of a few hundredths unresolved. The comparison with the CNN is descriptive, because its predictions are not available for a paired test. Nodal delineations in public collections are incomplete and their conventions are not documented, so the whole tumour as defined here depends on what each centre chose to contour. Calibration, clinical utility and performance in sociodemographic subgroups were not assessed. The aim was to compare discrimination with a CNN for which only AUCs were reported, but a model intended for clinical use would need these analyses. Finally, only CT radiomics was studied, and graphs whose edges are built from other data, such as genomics or PET, may behave differently.
+
+In conclusion, on the public benchmark protocol of a published CNN, the external discrimination of radiomic GNNs in HNSCC was determined by the tumour region that the features described and not by the patient-similarity graph. Describing the primary and nodal GTVs together allowed these networks to match or exceed the CNN for locoregional recurrence and overall survival and to approach it for distant metastasis, whereas the graph added nothing over the same network without edges, and for locoregional recurrence a clinical model that included HPV status remained stronger than any imaging model. Radiomic studies compared with image-based networks should describe the same tumour region, imaging models should be compared with a complete clinical model, and graph-based outcome models should be reported together with their edgeless counterpart.
+
+%% =========================================================================================
+\bmhead{Supplementary Information}
+The online version contains supplementary material in Online Resource~1 (ESM\_1.pdf). Table S1 lists the configurations selected on validation, Table S2 gives the results of the seed re-runs, and Tables S3--S7 contain the completed TRIPOD+AI, CLAIM 2024, CLEAR, METRICS and RQS checklists.
+
+\bmhead{Acknowledgements}
+The author thanks the investigators who made the Head-Neck-PET-CT and HN1 collections publicly available through The Cancer Imaging Archive.
+
+\section*{Statements and Declarations}
+
+\bmhead{Funding}
+No funding was received for conducting this study.
+
+\bmhead{Competing Interests}
+The author has no relevant financial or non-financial interests to disclose.
+
+\bmhead{Author Contributions}
+Conceptualization, methodology, software, formal analysis, investigation, data curation, visualization, writing (original draft) and writing (review and editing): Hasan Shaikh. The author read and approved the final manuscript.
+
+\bmhead{Data Availability}
+All data analysed in this study are publicly accessible. The CT images, radiotherapy structure sets and clinical data of the development cohort are available from The Cancer Imaging Archive as the Head-Neck-PET-CT collection (\url{https://doi.org/10.7937/K9/TCIA.2017.8oje5q00}) and those of the external test cohort as the HN1 collection (\url{https://doi.org/10.7937/tcia.2019.8kap372n}), under the data usage policies of The Cancer Imaging Archive. No new patient data were generated. The radiomic features, tumour volumes and predictions derived in this study can be regenerated from these collections with the released code. The performance of the CNN was taken from the published report of Mateus et al.~\cite{mateus2023}.
+
+\bmhead{Code Availability}
+The code for feature extraction, construction of the patient-similarity graphs, model training and selection, the ablation and seed analyses, and the script that generates every table, figure and quoted number of this manuscript is openly available at \url{https://github.com/hash123shaikh/Radiomics_Graph_Attention_Network_HNC} under the MIT licence, together with the software environment and step-by-step instructions to reproduce the results.
+
+\section*{Compliance with Ethical Standards}
+
+\bmhead{Disclosure of Potential Conflicts of Interest}
+The author declares that there are no conflicts of interest.
+
+\bmhead{Research Involving Human Participants and/or Animals}
+This study is a secondary analysis of de-identified, publicly available data from The Cancer Imaging Archive; no new data were collected from human participants and no animals were involved. The original studies that created the collections obtained institutional ethics approval, and separate ethics approval was therefore not required for this analysis.
+
+\bmhead{Informed Consent}
+Not applicable to this secondary analysis. Informed consent, or a waiver of consent, was obtained by the original studies under their institutional approvals.
+
+\bibliography{references}
+
+\end{document}

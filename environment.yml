@@ -1,0 +1,13 @@
+# Conda environment of the published results (Python 3.8).
+#   conda env create -f environment.yml && conda activate hnc-popgraph
+# numpy is installed before pip runs, because pyradiomics builds against it.
+name: hnc-popgraph
+channels:
+  - conda-forge
+dependencies:
+  - python=3.8
+  - pip
+  - numpy=1.24.3
+  - setuptools>=65
+  - pip:
+      - -r requirements-lock.txt
