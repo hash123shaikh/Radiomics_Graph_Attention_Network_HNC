@@ -6,7 +6,7 @@ and input set) is retrained with R fresh, disjoint blocks of N_SEEDS seeds (the 
 seeds 0..9; here blocks start at 1000). Each block is a complete re-run of the 10-seed ensemble, so the
 spread of the MAASTRO AUC across blocks shows how much of the reported result is seed luck.
 
-Step 8.
+Step 9.
   python scripts/seed_robustness.py --region total --clinical burden --repeats 10 --n_jobs 4
 -> outputs/results/population_graph/<prefix>_seed_robustness.csv (one row per configuration x block)
 """

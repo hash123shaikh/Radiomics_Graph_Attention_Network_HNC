@@ -1,5 +1,5 @@
 """
-Step 9. Conventional classifiers on the same features and splits.
+Step 10. Conventional classifiers on the same features and splits.
 
 grid  feature set   orig (93) | orig+shape (107) | full (479 whole tumour; 1223 primary GTV, incl. wavelet)
       selection     mrmr | lasso | ucorr (univariate AUC + |r|<0.8 redundancy filter)   (train only)

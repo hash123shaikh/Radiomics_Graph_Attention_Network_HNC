@@ -12,7 +12,7 @@ and graph-chosen versus MLP-chosen is tested with a paired patient-level bootstr
 A matched analysis contrasts every graph configuration with the MLP that shares its features
 (feature set, selector, k, inputs), on validation and on test.
 
-Step 7.
+Step 8.
   python scripts/compare_graph_mlp.py [--prefix popgnn_burden_total]
 -> outputs/results/population_graph/<prefix>_family_selection.csv, <prefix>_graph_vs_mlp_paired.csv,
    <prefix>_graph_vs_mlp_matched.csv

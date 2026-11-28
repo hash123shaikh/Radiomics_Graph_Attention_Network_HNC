@@ -13,7 +13,7 @@ Models     GCN, GraphSAGE, GAT (2 layers) and an MLP without edges (control); pr
 Selection  highest VALIDATION AUC (pooled out-of-fold for MATEUS_CV, HMR+CHUM for MATEUS_COHORT);
            MAASTRO labels are never used for training or choosing.
 
-Step 6.
+Steps 6 (main analysis) and 7 (ablation).
   python scripts/train_population_graph.py --region total --clinical burden --n_jobs 4    (main analysis)
   python scripts/train_population_graph.py --region primary --clinical mateus             (ablation; and the
                                                                   two other region x clinical combinations)
