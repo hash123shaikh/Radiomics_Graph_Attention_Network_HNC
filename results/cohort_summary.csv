@@ -1,0 +1,7 @@
+task,horizon_months,cohort,role,patients,events,event_rate
+LR,24,HNPET,train/validation (4 Canadian centres),276,30,0.109
+LR,24,MAASTRO,external test,121,30,0.248
+DM,24,HNPET,train/validation (4 Canadian centres),276,27,0.098
+DM,24,MAASTRO,external test,109,7,0.064
+OS,48,HNPET,train/validation (4 Canadian centres),164,44,0.268
+OS,48,MAASTRO,external test,135,45,0.333

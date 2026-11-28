@@ -215,6 +215,8 @@ manuscript text. With the published environment these files are identical to tho
 
 ## Reading the results
 
+The summary tables from our own run are included in [`results/`](results/) (no patient-level data), so every number in the manuscript can be checked without re-running the study.
+
 Each grid run writes two files per endpoint and design to `outputs/results/population_graph/`:
 
 * `<prefix>_<task>_<design>.csv`: one row per configuration, with `val_auc` (used for choosing),
@@ -277,6 +279,7 @@ Where the results appear in the manuscript:
 │   │                             figures, tables, submission figures, Overleaf bundle
 │   ├── scripts/                  make_assets.py (step 11), make_checklists.py, make_report.py
 │   └── generated/                raw output of make_assets.py
+├── results/                    summary tables from our run (aggregated, no patient data)
 ├── environment.yml, requirements.txt, requirements-lock.txt
 ├── data/                         TCIA data (you create it; not in the repository)
 └── outputs/                      everything the pipeline produces (not in the repository)
