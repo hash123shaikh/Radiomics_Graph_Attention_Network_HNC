@@ -159,7 +159,7 @@ CLEAR = [
     ('Method: feature extraction', None),
     ('25', 'Feature extraction method', 'Yes', 'Section 2.2 (PyRadiomics 3.0.1, 3D)'),
     ('26', 'Feature classes', 'Yes', 'Section 2.2'),
-    ('27', 'Number of features', 'Yes', 'Section 2.2 (479)'),
+    ('27', 'Number of features', 'Yes', 'Section 2.2 (479 whole tumour; 1223 primary GTV)'),
     ('28', 'Default configuration statement', 'Yes', 'Section 2.2'),
     ('Method: data preparation', None),
     ('29', 'Handling of missing data', 'Yes', 'Sections 2.3 and 2.4'),
